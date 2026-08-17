@@ -1,0 +1,175 @@
+======================================================================
+CAMPAIGN FACTOR ANALYSIS
+Generated: 2026-05-27 15:28
+======================================================================
+
+Data: 16919 rows, 60 dates (2026-03-29 → 2026-05-27)
+Rows with both cost and revenue: 3627
+By platform: {'FB': 11306, 'GG': 1276, 'TT': 4337}
+
+======================================================================
+FACTOR 1: CALENDAR FACTOR (Weekend vs Weekday)
+======================================================================
+
+### 1.1 Product-Level Analysis (Athena Revenue + XMP Cost)
+
+  All Products Combined (min daily cost > $100):
+  Weekend: n=11, avg ROAS=0.46, avg cost=$67147.82
+  Weekday: n=34, avg ROAS=0.37, avg cost=$67634.75
+  Δ ROAS: 0.0922 (+25.0%), t=1.779, p=0.1888
+  Δ Cost: $-486.93 (-0.7%), t=-0.043, p=1.0000
+
+### 1.2 By Platform (Campaign Level)
+
+  FB:
+    Weekend: n=17, avg ROAS=0.07, avg cost=$53834.07
+    Weekday: n=42, avg ROAS=0.07, avg cost=$51500.36
+    Δ ROAS: +3.7%, p=1.0000
+    Δ CPI: -22.0%, p=1.0000
+
+  GG:
+    Weekend: n=17, avg ROAS=0.12, avg cost=$6445.49
+    Weekday: n=41, avg ROAS=0.11, avg cost=$6902.33
+    Δ ROAS: +12.0%, p=1.0000
+    Δ CPI: -16.1%, p=1.0000
+
+  TT:
+    Weekend: n=16, avg ROAS=0.09, avg cost=$15418.79
+    Weekday: n=39, avg ROAS=0.10, avg cost=$15465.51
+    Δ ROAS: -3.3%, p=1.0000
+    Δ CPI: +40.1%, p=0.5474
+
+### 1.3 By Platform × System
+  FB iOS: WE avg=0.05, WD avg=0.05, Δ=-3.7% p=1.000 
+  FB Android: WE avg=0.09, WD avg=0.09, Δ=+5.4% p=1.000 
+  GG Android: WE avg=0.12, WD avg=0.11, Δ=+12.0% p=1.000 
+  TT iOS: WE avg=0.10, WD avg=0.10, Δ=-1.9% p=1.000 
+  TT Android: WE avg=0.09, WD avg=0.10, Δ=-4.7% p=1.000 
+
+### 1.4 Day-of-Week Breakdown (Product Level)
+  Monday    : n= 7, avg ROAS=0.11, median=0.00
+  Tuesday   : n= 9, avg ROAS=0.13, median=0.00
+  Wednesday : n= 8, avg ROAS=0.06, median=0.00
+  Thursday  : n= 8, avg ROAS=0.10, median=0.00
+  Friday    : n= 7, avg ROAS=0.07, median=0.00
+  Saturday  : n= 7, avg ROAS=0.12, median=0.00
+  Sunday    : n= 8, avg ROAS=0.08, median=0.00
+
+======================================================================
+FACTOR 2: MOMENTUM FACTOR
+======================================================================
+
+  Campaigns with cost+revenue data: 352
+  Campaigns with >= 5 days: 125
+
+### 2.1 Lookback=3 days: If ROAS > campaign median for 3 consecutive days, what happens next?
+    FB : After momentum signal: 41.7% above median (n=48)
+         Without signal:        53.8% above median (n=450)
+         Lift: -12.1%
+    GG : After momentum signal: 36.4% above median (n=11)
+         Without signal:        49.3% above median (n=73)
+         Lift: -13.0%
+    TT : After momentum signal: 66.7% above median (n=24)
+         Without signal:        49.5% above median (n=105)
+         Lift: 17.1%
+    ALL: After momentum signal: 48.2% above median (n=83)
+         Without signal:        52.5% above median (n=628)
+         Lift: -4.4%
+
+### 2.1 Lookback=5 days: If ROAS > campaign median for 5 consecutive days, what happens next?
+    FB : After momentum signal: 20.0% above median (n=5)
+         Without signal:        53.7% above median (n=341)
+         Lift: -33.7%
+    GG : After momentum signal: 50.0% above median (n=2)
+         Without signal:        46.8% above median (n=62)
+         Lift: 3.2%
+    TT : After momentum signal: 75.0% above median (n=4)
+         Without signal:        60.0% above median (n=55)
+         Lift: 15.0%
+    ALL: After momentum signal: 45.5% above median (n=11)
+         Without signal:        53.5% above median (n=458)
+         Lift: -8.0%
+
+### 2.2 ROAS Autocorrelation (lag-1)
+  FB: lag-1 autocorrelation r=0.064 (n=764 day-pairs)
+  GG: lag-1 autocorrelation r=0.070 (n=115 day-pairs)
+  TT: lag-1 autocorrelation r=0.224 (n=265 day-pairs)
+
+======================================================================
+FACTOR 3: VOLATILITY FACTOR
+======================================================================
+
+  Campaigns with >= 7 days of data: 96
+
+### 3.1 Volatility Quartile Analysis (by platform)
+
+  FB (n=64 campaigns):
+    Low volatility  (Q1): avg CV=0.52, avg ROAS=0.42, avg daily cost=$567.66
+    High volatility (Q4): avg CV=1.00, avg ROAS=0.50, avg daily cost=$222.66
+    Q1 vs Q4 ROAS: Δ=-15.7%, p=0.4156
+
+  GG (n=8 campaigns):
+    Low volatility  (Q1): avg CV=0.52, avg ROAS=0.23, avg daily cost=$468.23
+    High volatility (Q4): avg CV=1.37, avg ROAS=0.33, avg daily cost=$251.71
+
+  TT (n=24 campaigns):
+    Low volatility  (Q1): avg CV=0.50, avg ROAS=0.49, avg daily cost=$912.55
+    High volatility (Q4): avg CV=1.26, avg ROAS=0.54, avg daily cost=$110.65
+    Q1 vs Q4 ROAS: Δ=-8.6%, p=1.0000
+
+### 3.2 High-Spend + High-Volatility Risk Analysis
+
+  FB:
+    High-spend + High-vol: n=12, avg ROAS=0.39
+    High-spend + Low-vol:  n=20, avg ROAS=0.39
+    Δ ROAS: -1.0%, p=1.0000
+
+  GG:
+    High-spend + High-vol: n=2, avg ROAS=0.42
+    High-spend + Low-vol:  n=2, avg ROAS=0.29
+
+  TT:
+    High-spend + High-vol: n=3, avg ROAS=0.30
+    High-spend + Low-vol:  n=9, avg ROAS=0.43
+    Δ ROAS: -30.9%, p=0.0168
+
+======================================================================
+FACTOR 4: SPEND RESPONSE FACTOR (Cost as Budget Proxy)
+======================================================================
+
+  Campaigns with >= 5 days of cost data: 605
+
+### 4.1 Spend Surge Analysis (>30% DoD cost increase)
+
+  FB:
+    Surge events: 1052
+    Avg ROAS before surge: 0.05
+    Avg ROAS on surge day: 0.06
+    Δ ROAS (surge vs pre): +12.1%
+    Avg ROAS 3-day post surge: 0.05 (Δ=-9.9%)
+    Normal days avg ROAS: 0.06 (n=6376)
+
+  GG:
+    Surge events: 144
+    Avg ROAS before surge: 0.07
+    Avg ROAS on surge day: 0.05
+    Δ ROAS (surge vs pre): -21.2%
+    Avg ROAS 3-day post surge: 0.05 (Δ=-25.1%)
+    Normal days avg ROAS: 0.04 (n=912)
+
+  TT:
+    Surge events: 340
+    Avg ROAS before surge: 0.09
+    Avg ROAS on surge day: 0.10
+    Δ ROAS (surge vs pre): +6.8%
+    Avg ROAS 3-day post surge: 0.09 (Δ=+2.7%)
+    Normal days avg ROAS: 0.06 (n=2467)
+
+### 4.2 Spend-Revenue Elasticity (by platform)
+  FB: cost-revenue correlation r=0.082 (n=22), median elasticity=1.72
+  GG: cost-revenue correlation r=0.268 (n=19), median elasticity=0.33
+  TT: cost-revenue correlation r=0.022 (n=17), median elasticity=1.40
+
+======================================================================
+ANALYSIS COMPLETE
+======================================================================

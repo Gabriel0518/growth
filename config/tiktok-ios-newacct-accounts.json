@@ -1,0 +1,29 @@
+{
+  "_doc": "TikTok 新增 iOS 广告账户配置（2026-07-22 屹恒新加，Mora iOS 产品）。套用现有 iOS 建广告模板（TT素材榜 + 同名寻址 + IOS14_CAMPAIGN + AEO/VO），仅改：账户/token/app_id/identity/产品段/命名。独立 token（TIKTOK_ACCESS_TOKEN_5，本次授权的 15 个账户批次）。素材黑/灰名单与其它 iOS/安卓共用。",
+  "_updated": "2026-07-22",
+  "_plans_comment": "沿用现有 iOS 建广告计划：AEO×2($15/$18) + VO×2(0.5/0.6)，$50/天 ENABLE",
+  "_rank_channel": "TT（对齐现有 iOS 素材榜）",
+  "_topup_comment": "屹恒 2026-07-22：Mora 起步素材少，同名寻址(Mora段)凑不满10个时，从 TT 全局榜从头补，对非 Mora 素材【不改名、原样用别的产品素材】补齐到 10。",
+  "_appid_note": "★ app_id=7662992400895688722 是 TikTok 广告系统内部 app 资产 ID（从屹恒手动建的 Mora 广告读出）；6761983452 是 App Store 数字 ID（AppsFlyer 追踪链接里那个），建广告不能用后者，用了报 40002。",
+  "_ios14_params_note": "★ 对齐屹恒 2026-07-22 手动建的 Mora 广告：非专属系列(is_advanced_dedicated_campaign=false) + 保留SKAN(disable_skan_campaign=false) + 版位 NORMAL 且 placements=[PLACEMENT_TIKTOK]（NORMAL 版位必须显式传 placements，AUTOMATIC 不用）。与现有 Romi iOS/Luma/GraceChat（都是 true/true/AUTOMATIC）不同，故用账户级覆盖字段传入，不影响老产品。",
+  "accounts": [
+    {
+      "product": "Mora iOS",
+      "advertiser_id": "7662675338551607303",
+      "advertiser_name": "省广_Mora iOS_syh_Agentic",
+      "token_env": "TIKTOK_ACCESS_TOKEN_5",
+      "app_id": "7662992400895688722",
+      "app_store_id": "6761983452",
+      "app_name": "Mora: Unique Frequencies",
+      "identity": "cad9b604-bd2b-58f4-831d-d992266ef39d",
+      "identity_name": "Mora",
+      "identity_bc_id": "7657828446814470160",
+      "seg": "Mora",
+      "cname": "Mora iOS",
+      "is_advanced_dedicated_campaign": false,
+      "disable_skan_campaign": false,
+      "placement_type": "PLACEMENT_TYPE_NORMAL",
+      "placements": ["PLACEMENT_TIKTOK"]
+    }
+  ]
+}

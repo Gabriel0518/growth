@@ -1,0 +1,43 @@
+{
+  "_doc": "TikTok 新增3个安卓广告账户配置（2026-07-20 屹恒新加，套用现有安卓建广告模板：FB素材榜 + APP_ANDROID + AEO/VO）。每账户独立 token（171账户分4token）。第4个账户 7662675338551607303 未授权给我们的App，暂不接入。素材黑/灰名单与iOS/安卓共用。",
+  "_updated": "2026-07-20",
+  "_plans_comment": "沿用现有安卓建广告计划：AEO×2($18/$21) + VO×2(0.3/0.35)，$50/天 ENABLE",
+  "accounts": [
+    {
+      "product": "Nalo And",
+      "advertiser_id": "7637336690952044552",
+      "advertiser_name": "省广_Nalo And_1_syh_Agentic",
+      "token_env": "TIKTOK_ACCESS_TOKEN_2",
+      "app_id": "7637669853075537938",
+      "identity": "7817f900-3e1a-582e-944b-1dc9a47803e9",
+      "identity_name": "Nalo and",
+      "identity_bc_id": "7637091701250228240",
+      "seg": "Nalo",
+      "cname": "Nalo And"
+    },
+    {
+      "product": "Kira And",
+      "advertiser_id": "7624046549626175495",
+      "advertiser_name": "省广_Kira And_syh_Agentic",
+      "token_env": "TIKTOK_ACCESS_TOKEN_3",
+      "app_id": "7624473957655281671",
+      "identity": "f80eb8b7-46df-5a6f-be26-8ca43a2ed915",
+      "identity_name": "Kira and",
+      "identity_bc_id": "7624056269426524178",
+      "seg": "Kira",
+      "cname": "Kira And"
+    },
+    {
+      "product": "Romi And",
+      "advertiser_id": "7615149157834653703",
+      "advertiser_name": "省广_Romi And_1_syh_Agentic",
+      "token_env": "TIKTOK_ACCESS_TOKEN_4",
+      "app_id": "7613345963655774215",
+      "identity": "7fbe0e52-70b4-5966-b66b-32e295286d76",
+      "identity_name": "Romi-And",
+      "identity_bc_id": "7615182737393254401",
+      "seg": "Romi",
+      "cname": "Romi And"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+[Unit]
+Description=高性能数据接收服务 v2
+After=network.target
+
+[Service]
+User=admin
+WorkingDirectory=/home/admin/dataserver
+# uvicorn 多 worker + uvloop 事件循环 + 自动 CPU 核心数
+ExecStart=/home/admin/.local/bin/uvicorn app:app \
+    --host 0.0.0.0 \
+    --port 5000 \
+    --workers 2 \
+    --loop uvloop \
+    --http httptools \
+    --log-level warning \
+    --backlog 2048
+Restart=always
+RestartSec=3
+# 提高文件描述符上限，支持高并发连接
+LimitNOFILE=65536
+Environment=PYTHONPATH=/home/admin/.local/lib/python3.6/site-packages
+
+[Install]
+WantedBy=multi-user.target

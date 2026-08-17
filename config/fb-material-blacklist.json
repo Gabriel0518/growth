@@ -1,0 +1,5 @@
+{
+  "_doc": "Facebook 建广告素材黑名单（与 TikTok 完全独立隔离）。素材累计被 FB 拒审满 5 次后进入黑名单：建广告时直接跳过，且 autopilot 会全删该素材已投放广告（含在投的）。匹配不区分产品段（Dora/Romi/Doni/Luma/Jovia/GraceChat/Kira/Nalo 等产品 token 在比对前抹掉），也不区分末尾 .mp4/.mov。即黑名单里写任一产品版本即可拦住全部产品同款素材。维护：由 autopilot 拒审计数满 5 次自动写入；也可手动往 materials 数组加完整原始素材名。",
+  "_updated": "2026-07-21",
+  "materials": []
+}

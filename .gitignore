@@ -1,0 +1,84 @@
+# === 密钥（绝不入库）===
+# .env.example 是模板（入库）；照它填出来的 .env 含真实密钥，一律挡在 git 之外。
+.env
+.env.*
+!.env.example
+
+# === 依赖 ===
+**/node_modules/
+**/__pycache__/
+**/.python-version
+
+# === 数据库 & 数据文件 ===
+dataserver/data.db
+dataserver/data.db-shm
+dataserver/data.db-wal
+dataserver/.alert_locks/
+dataserver/athena_data/
+dashboard/data/
+dashboard/server.log
+scripts/cache.db
+
+# === 临时/生成文件 ===
+tmp/
+state/
+output/
+*.png
+*.bak
+*.html
+# 例外：/mia 公开静态页（同事「投放协同中心」单文件 HTML）需随仓库部署，勿忽略
+!apps/web/public/mia/index.html
+public-downloads/
+debug-*
+tmp-*
+skills/
+
+# === 根目录非业务文件 ===
+# 注意：pnpm monorepo 化后根 package.json 是业务文件，必须入库（不再忽略）。
+/package-lock.json
+
+# === 构建产物 / 依赖 ===
+**/dist/
+**/.next/
+**/.turbo/
+**/*.tsbuildinfo
+**/next-env.d.ts
+
+# === 文档（非业务代码）===
+# docs/ — 项目文档，需要进 git
+# === 个人文件（不进公司仓库）===
+thesis/
+*.bak*
+scripts/build_thesis*
+scripts/format_thesis.py
+scripts/generate_thesis_figures.py
+scripts/patch_thesis_docx.py
+scripts/thesis_utils.py
+dashboard/REQUIREMENTS.md
+SOUL.md
+USER.md
+IDENTITY.md
+MEMORY.md
+HEARTBEAT.md
+TOOLS.md
+# 注意：AGENTS.md 已改为「项目级」协作规范（技术栈/目录/lint/部署口径），必须入库，
+# 故不再忽略。个人 AI 助手的私有文件请用上面几个文件名，别叫 AGENTS.md。
+# SERVER_OVERVIEW.md is now tracked in git
+memory/
+.learnings/
+
+# === OpenClaw 配置（私有）===
+.openclaw/
+.clawdhub/
+.clawhub/
+
+# === IDE ===
+.idea/
+
+# === 杂项 ===
+mihomo-config.yaml
+dataserver/postback.db
+
+# === 中间产物（一次性运行输出，不入库）===
+scripts/compare-result.json
+analysis/incident-0508/

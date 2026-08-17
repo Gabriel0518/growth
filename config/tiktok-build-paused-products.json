@@ -1,0 +1,5 @@
+{
+  "_doc": "TikTok 每日建广告——产品级暂停开关。tiktok-ios-daily-build.py 每次运行读此文件，paused 数组里的产品名（对应 PRODUCTS 的 key，如 'GraceChat' / 'Romi iOS' / 'Luma'）会被整体跳过、不建广告，其余产品照常。恢复：把对应产品名从 paused 里删掉即可（一句话我就能改）。",
+  "_updated": "2026-07-20",
+  "paused": []
+}

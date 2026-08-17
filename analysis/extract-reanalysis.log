@@ -1,0 +1,6 @@
+Extracting AF revenue data (3 tables UNION ALL)...
+  AF: 18391 rows in 86.8s → /home/admin/.openclaw/workspace/analysis/revenue_by_campaign_day.csv
+Extracting AD revenue data...
+  AD: 7321 rows in 84.9s → /home/admin/.openclaw/workspace/analysis/revenue_ad_by_campaign_day.csv
+
+✅ Revenue extraction complete!

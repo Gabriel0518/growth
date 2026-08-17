@@ -1,0 +1,13 @@
+{
+  "_doc": "TikTok 建广告素材灰名单。与黑名单区别：①建广告时灰名单素材【仍照常使用】，不跳过。②只清理【部分过审广告】(secondary_status=AD_STATUS_REVIEW_PARTIALLY_APPROVED) 里的灰名单素材；对【完全过审广告】(AD_STATUS_DELIVERY_OK) 即使含灰名单素材也保留。匹配规则同黑名单：归一化时抹掉产品 token(Dora/Romi/Doni/Luma/Jovia/GraceChat/Kira/Nalo) 和末尾 .mp4、转小写后比对，即写任一产品版本即拦住全部产品同款素材。维护：直接往 materials 数组加完整原始素材名(含或不含 .mp4 均可)。",
+  "_updated": "2026-07-22",
+  "materials": [
+    "260701_AIGC_WYM_Romi_口播类_创新_暗示_Ashley",
+    "0117_KN_Luma_暗示配音_kid free_1",
+    "转_1005_KN_Doni_暗示动作_6.mp4",
+    "0317_ZHT_Jovia_动作暗示_1.mp4",
+    "0506_ZHT_Romi_迭代简介_1.mp4",
+    "转_Romi_1005_SY_Roleplay_1.mp4",
+    "0607_SY_Romi_自我介绍_5.mp4"
+  ]
+}

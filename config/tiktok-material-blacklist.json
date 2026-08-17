@@ -1,0 +1,10 @@
+{
+  "_doc": "TikTok 建广告素材黑名单。建广告时命中黑名单的素材直接跳过、顺延到下一个。匹配不区分产品段（Dora/Romi/Doni/Luma/Jovia/GraceChat/Kira/Nalo 等产品 token 会在比对前被抹掉），也不区分末尾 .mp4。即黑名单里写任一产品版本即可拦住全部产品的同款素材。维护：直接往 materials 数组里加素材名（完整原始名，含或不含 .mp4 均可）。",
+  "_updated": "2026-07-20",
+  "materials": [
+    "0224_YM_Romi_tooold_4",
+    "0309_ZHT_GraceChat_暗示引导_5",
+    "0609_YM_Jovia_talk ai_6",
+    "0317_ZHT_Dora_多女左滑口播_6.mp4"
+  ]
+}

@@ -1,0 +1,18 @@
+# 构建上下文瘦身：只保留新单体仓库（apps/packages/services/scripts + 根配置）。
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/*.tsbuildinfo
+
+# 迁移前的旧服务与分析/文档，不进镜像。
+dashboard
+dataserver
+analysis
+docs
+config
+
+.git
+.env
+.env.*
+*.log

@@ -1,0 +1,5 @@
+{
+  "_doc": "Facebook 建广告素材灰名单（与 TikTok 完全独立隔离）。counts 记录每条素材（归一化文件名）累计被 FB 拒审次数。规则：①拒审 1~2 次：进灰名单但【建广告时照常使用】。②满 3 次：不再用于新建广告（但不主动删已投放中未被拒的部分）。③满 5 次：转入黑名单，autopilot 全删该素材广告（含在投）。匹配规则同黑名单：归一化时抹掉产品 token(Dora/Romi/Doni/Luma/Jovia/GraceChat/Kira/Nalo)+末尾 .mp4/.mov、转小写后比对，写任一产品版本即拦住全部产品同款。维护：由 autopilot 每次轮询到 DISAPPROVED 时对该归一化名 +1;本轮 create 脚本只读 counts 做过滤（>=3 跳过），不写入。",
+  "_updated": "2026-07-21",
+  "counts": {}
+}

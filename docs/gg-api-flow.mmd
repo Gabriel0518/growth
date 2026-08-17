@@ -1,0 +1,43 @@
+flowchart TD
+    START([开始 · 从0自建 GG 广告 API 对接]) --> Q0{公司是否已有<br/>Developer Token?}
+    Q0 -->|已有| REUSE[复用现有 Token<br/>找技术负责人要<br/>去已有 MCC 的 API Center 查]
+    Q0 -->|没有 / 不确定| S1
+
+    subgraph P1["① 建 Manager 账号 (MCC)"]
+        S1["ads.google.com/home/tools/manager-accounts<br/>创建 Google Ads Manager (MCC) 账号<br/>Developer Token 挂在 MCC 上"]
+    end
+
+    REUSE --> S3
+    S1 --> S2
+
+    subgraph P2["② 申请 Developer Token"]
+        S2["登录 MCC → 管理(Admin) → API Center<br/>ads.google.com → 工具与设置 → API Center<br/>填 API Access 表：公司名/官网URL/联系邮箱/用途说明<br/>提交后默认拿 Explorer Access"]
+        S2b["申请 Basic Access<br/>(生产 reporting 用途, 约2工作日过审)<br/>量大再申 Standard"]
+        S2 --> S2b
+    end
+
+    subgraph P3["③ 建 Google Cloud OAuth 凭据"]
+        S3["console.cloud.google.com<br/>新建项目 → 启用 Google Ads API<br/>OAuth 同意屏幕 + 创建 OAuth2 客户端ID<br/>拿到 Client ID + Client Secret"]
+    end
+
+    subgraph P4["④ 换 Refresh Token"]
+        S4["OAuth Playground / 本地脚本 授权一次<br/>developers.google.com/oauthplayground<br/>scope: adwords<br/>用公司 Google Ads 账号同意 → 换长期 Refresh Token"]
+    end
+
+    subgraph P5["⑤ 首次调用验证"]
+        S5["集齐4件套: Developer Token + Client ID<br/>+ Client Secret + Refresh Token + MCC customer_id<br/>用 GAQL 查一条 campaign/消耗 验证链路"]
+    end
+
+    S2b --> S3
+    S3 --> S4
+    S4 --> S5
+    S5 --> DONE([接入看板: 写抓取脚本<br/>参考 scripts/fetch-tiktok.js 模式<br/>替代 XMP 的 GG 部分])
+
+    style START fill:#2d6cdf,color:#fff
+    style DONE fill:#1e9e5a,color:#fff
+    style Q0 fill:#f5a623,color:#000
+    style P1 fill:#eef3ff
+    style P2 fill:#eef3ff
+    style P3 fill:#eef3ff
+    style P4 fill:#eef3ff
+    style P5 fill:#eef3ff

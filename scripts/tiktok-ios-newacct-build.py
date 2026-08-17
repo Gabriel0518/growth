@@ -1,0 +1,366 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+tiktok-ios-newacct-build.py —— 新增 iOS 账户每日建广告（Mora iOS，2026-07-22 屹恒新加）
+
+背景：新授权一批 iOS 广告账户（TIKTOK_ACCESS_TOKEN_5），首个投放 Mora iOS。
+每日操作与其它 iOS 账户完全一样，仅改：账户/token/app_id/identity/产品段/命名。
+独立 token，故不能复用 tiktok-ios-daily-build.py 的单 token 单账户（AID 硬编码）。
+
+与 tiktok-ios-daily-build.py 逻辑一致，差异：
+  · 逐账户循环，每账户用自己的 token（config/tiktok-ios-newacct-accounts.json 的 token_env）
+  · 建广告走 iOS 模块 tiktok-create-ios-ad.py（IOS14_CAMPAIGN + APP_IOS + identity_bc_id 按账户）
+  · 素材榜走 TT 通道（对齐现有 iOS）
+  · ★ 补量兜底（屹恒 2026-07-22）：Mora 段同名寻址凑不满 need 条时，从 TT 全局榜从头补，
+    对非 Mora 素材【不改名、原样用别的产品素材】补齐到 need（see resolve() topup 分支）。
+
+流程/计划完全沿用 iOS：AEO×2($15/$18) + VO×2(0.5/0.6)，$50/天 ENABLE。
+0素材守卫、幂等查重、黑名单过滤、--lib-only 纯库内、--dry-run、--test 全部对齐。
+
+用法:
+  python3 tiktok-ios-newacct-build.py --dry-run       # 只寻址不建
+  python3 tiktok-ios-newacct-build.py --test          # 每账户建1条 VO_1 DISABLE 验证
+  python3 tiktok-ios-newacct-build.py --lib-only      # 纯库内直取（晚上23:40用，配合中午预热）
+  python3 tiktok-ios-newacct-build.py                 # 正式：每账户 AEO×2+VO×2 ENABLE $50/天
+
+跳过: scripts/.skip_build_date_ios_newacct==今天 则跳过；产品级暂停复用 config/tiktok-build-paused-products.json。
+黑/灰名单与其它 iOS/安卓共用。
+"""
+import os, sys, json, time, hashlib, urllib.request, urllib.parse, subprocess, datetime, importlib.util
+
+DRY = "--dry-run" in sys.argv
+TEST = "--test" in sys.argv
+LIB_ONLY = "--lib-only" in sys.argv
+WS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+ACCT_FP = os.path.join(WS, "config", "tiktok-ios-newacct-accounts.json")
+DATE_TAG = None
+
+# 新账户起步计划（屹恒 2026-07-22）：新账户无转化历史，VO（价值优化）暂不支持
+# （报 Selected optimization value not supported），先全 AEO（对齐手动建的 Mora 广告）。
+# ★ 非专属系列 AEO 走 NO_BID（不能 Cost Cap），故两条 AEO 完全一样、无 bid 15/18 区别，
+#   bid 值这里只是占位（模块 NO_BID 分支不读它）。每条 budget=$50，两条共 $100/天。
+# 账户跑出转化后再把 VO 加回（如 AEO×2 + VO×2）。建广告已对"优化目标不支持"做优雅跳过（不报错、不建空壳）。
+PLANS = [("AEO",1,0),("AEO",2,0)]
+PLANS_TEST = [("AEO",1,0)]
+
+SEG_LIST = ['Dora','Romi','Doni','Luma','Jovia','GraceChat','Kira','Nalo','Mora']
+CREATIVE_DIR = os.path.join(WS, "dashboard", "data")
+BLACKLIST_FP = os.path.join(WS, "config", "tiktok-material-blacklist.json")
+PAUSED_FP = os.path.join(WS, "config", "tiktok-build-paused-products.json")
+
+XMP_HOST="xmp-open.mobvista.com"; XMP_CID="d607c5992ba7c40f19d9834da9b425e6"; XMP_SEC="5520f711776d92ab13e8683c72e0fd30"
+TT_API="https://business-api.tiktok.com/open_api/v1.3"
+YIHENG="ou_b2467dac5ff1d686fb48ccf1fbaa0c0d"; LARK=os.path.expanduser("~/.npm-global/bin/lark-cli")
+
+# 当前账户 token（每账户循环时切换）
+TK = ""
+
+def load_tokens():
+    t={}
+    for l in open("/etc/environment"):
+        l=l.strip()
+        for k in ["TIKTOK_ACCESS_TOKEN_5","TIKTOK_ACCESS_TOKEN_4","TIKTOK_ACCESS_TOKEN_3","TIKTOK_ACCESS_TOKEN_2","TIKTOK_ACCESS_TOKEN"]:
+            if l.startswith(k+"="): t[k]=l.split("=",1)[1].strip().strip('"'); break
+    return t
+TOKENS = load_tokens()
+
+def load_accounts():
+    return json.load(open(ACCT_FP)).get("accounts", [])
+
+def load_paused():
+    try:
+        d = json.load(open(PAUSED_FP)); return {p for p in d.get("paused", []) if p}
+    except Exception as e:
+        print(f"⚠️ 暂停开关加载失败({e})，本次不暂停"); return set()
+
+def _norm_key(name):
+    if not name: return ""
+    base = name[:-4] if name.lower().endswith(".mp4") else name
+    return "_".join(s for s in base.split("_") if s not in SEG_LIST).lower()
+
+def load_blacklist():
+    try:
+        data = json.load(open(BLACKLIST_FP)); return {_norm_key(m) for m in data.get("materials", []) if m}
+    except Exception as e:
+        print(f"⚠️ 黑名单加载失败({e})"); return set()
+
+def is_blacklisted(name, bl):
+    return _norm_key(name) in bl if bl else False
+
+def today_bj(): return (datetime.datetime.utcnow()+datetime.timedelta(hours=8)).strftime("%Y-%m-%d")
+def prev(ds,n): return (datetime.datetime.strptime(ds,"%Y-%m-%d")-datetime.timedelta(days=n)).strftime("%Y-%m-%d")
+
+def feishu(text):
+    if DRY: print("\n[DRY 飞书]\n"+text); return
+    env=dict(os.environ); env["PATH"]=os.path.expanduser("~/.npm-global/bin")+":"+env.get("PATH","")
+    try:
+        out=subprocess.run([LARK,"im","+messages-send","--as","bot","--user-id",YIHENG,"--text",text],
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True,timeout=60,env=env)
+        print("✅ 飞书已发" if '"message_id"' in (out.stdout+out.stderr) else "⚠️ 飞书失败:"+(out.stdout+out.stderr)[:200])
+    except Exception as e: print("⚠️ 飞书异常:",e)
+
+# ── XMP ──
+def xmp_post(path, body):
+    ts=int(time.time()); sign=hashlib.md5((XMP_SEC+str(ts)).encode()).hexdigest()
+    body=dict(body,client_id=XMP_CID,timestamp=ts,sign=sign); p=json.dumps(body).encode()
+    req=urllib.request.Request(f"https://{XMP_HOST}{path}",data=p,
+        headers={"Content-Type":"application/json","Content-Length":len(p)})
+    for _ in range(3):
+        try: return json.loads(urllib.request.urlopen(req,timeout=30).read())
+        except urllib.error.HTTPError as e:
+            try: return json.loads(e.read())
+            except: pass
+        except Exception: time.sleep(2)
+    return {"code":-1}
+def xmp_search(name):
+    r=xmp_post("/v1/media/material/list",{"material_name":[name],"page":1,"page_size":5})
+    if r.get("code")!=0: return None
+    data=r.get("data",{}); rows=data.get("data",[]) if isinstance(data,dict) else []
+    return rows[0] if rows else None
+
+# ── TT（用当前账户 TK）──
+def tt_post(ep,body):
+    req=urllib.request.Request(f"{TT_API}/{ep}/",data=json.dumps(body).encode(),
+        headers={"Access-Token":TK,"Content-Type":"application/json"})
+    try: return json.loads(urllib.request.urlopen(req,timeout=120).read())
+    except urllib.error.HTTPError as e: return json.loads(e.read())
+def tt_get(ep,params):
+    url=f"{TT_API}/{ep}/?"+urllib.parse.urlencode(params)
+    req=urllib.request.Request(url,headers={"Access-Token":TK})
+    try: return json.loads(urllib.request.urlopen(req,timeout=60).read())
+    except urllib.error.HTTPError as e: return json.loads(e.read())
+
+# ── 全局榜（TT 通道，与现有 iOS 一致）──
+def build_rank():
+    d=today_bj(); dates=[prev(d,i) for i in (3,2,1)]
+    agg={}
+    for ds in dates:
+        fp=os.path.join(CREATIVE_DIR,f"creative-{ds}.json")
+        if not os.path.exists(fp): continue
+        try: data=json.load(open(fp))
+        except Exception: continue
+        for c in data.get("creatives",[]):
+            if c.get("channel")!="TT": continue
+            k=(c.get("product",""),c.get("name",""))
+            if k not in agg: agg[k]={"name":c.get("name",""),"newUserRevenue":0}
+            agg[k]["newUserRevenue"]+=(c.get("newUserRevenue",0) or 0)
+    return sorted(agg.values(),key=lambda x:x["newUserRevenue"],reverse=True), dates
+
+def swap(name,target):
+    base=name[:-4] if name.lower().endswith(".mp4") else name
+    segs=base.split("_")
+    for i,s in enumerate(segs):
+        if s in SEG_LIST:
+            if s!=target: segs[i]=target
+            return "_".join(segs)+".mp4"
+    return None
+
+def tt_lib_index(aid):
+    idx={}; page=1
+    while True:
+        r=tt_get("file/video/ad/search",{"advertiser_id":aid,"page":page,"page_size":100})
+        if r.get("code")!=0: break
+        data=r.get("data",{}); lst=data.get("list",[])
+        for v in lst:
+            fn=v.get("file_name"); vid=v.get("video_id")
+            if fn and vid and fn not in idx: idx[fn]=vid
+        pi=data.get("page_info",{})
+        if page>=pi.get("total_page",1) or not lst: break
+        page+=1; time.sleep(0.2)
+    return idx
+
+def _cover_ok(c):
+    w,h=c.get("width"),c.get("height")
+    if not w or not h: return True
+    return abs((h/w)-1.7778)<0.03
+
+def suggest_cover(aid, vid, tries=6, gap=4):
+    for _ in range(tries):
+        cr=tt_get("file/video/suggestcover",{"advertiser_id":aid,"video_id":vid})
+        lst=cr.get("data",{}).get("list",[])
+        if lst:
+            for c in lst:
+                if c.get("id") and _cover_ok(c): return c["id"]
+            if all((c.get("width") and c.get("height")) for c in lst): return None
+        time.sleep(gap)
+    return None
+
+def existing_campaign_names(aid):
+    names=set(); page=1
+    while True:
+        r=tt_get("campaign/get",{"advertiser_id":aid,"page":page,"page_size":100,
+            "fields":json.dumps(["campaign_name","secondary_status"])})
+        if r.get("code")!=0: return None
+        data=r.get("data",{}); lst=data.get("list",[])
+        for c in lst:
+            if c.get("secondary_status")=="CAMPAIGN_STATUS_DELETE": continue
+            nm=c.get("campaign_name")
+            if nm: names.add(nm)
+        pi=data.get("page_info",{})
+        if page>=pi.get("total_page",1) or not lst: break
+        page+=1; time.sleep(0.2)
+    return names
+
+def _prep_one(aid, fname, vid_hint, lib, lib_only):
+    """把单个素材备好成 [video_id, cover, file_name]；失败返回 None。
+    vid_hint: 若已知库内 video_id 直接用；否则先查库，再 XMP 上传兜底。"""
+    vid = vid_hint or lib.get(fname)
+    if vid:
+        cover=suggest_cover(aid, vid, tries=3, gap=2)
+        if cover: return [vid,cover,fname]
+    if lib_only: return None
+    row=xmp_search(fname); time.sleep(0.35)
+    if not (row and row.get("file_url")): return None
+    r2=tt_post("file/video/ad/upload",{"advertiser_id":aid,"upload_type":"UPLOAD_BY_URL","video_url":row["file_url"],"file_name":fname})
+    if r2.get("code")!=0: return None
+    data=r2.get("data"); uvid=data[0]["video_id"] if isinstance(data,list) else data.get("video_id")
+    time.sleep(3)
+    cover=suggest_cover(aid, uvid, tries=12, gap=5)
+    if cover: return [uvid,cover,fname]
+    return None
+
+def resolve(aid, rank, target, need=10, lib=None, bl=None, lib_only=None):
+    """返回已备好直接建广告的素材 [[video_id,cover,file_name],...]。
+    ① 主：Mora 段同名寻址（swap → target 段）→ 库内直取 / XMP 上传。
+    ② 补量兜底（屹恒 2026-07-22）：主路凑不满 need 时，从 TT 全局榜从头补，
+       对【非 target 素材原样用（不改名、不换产品段）】补齐到 need。
+    黑名单命中的素材始终跳过。"""
+    if lib is None: lib=tt_lib_index(aid)
+    if bl is None: bl=load_blacklist()
+    if lib_only is None: lib_only=LIB_ONLY
+    picked=[]; seen=set(); skipped=[]
+    # ── ① 主：Mora 段同名寻址 ──
+    for r in rank:
+        if len(picked)>=need: break
+        if is_blacklisted(r["name"], bl): skipped.append(r["name"]); continue
+        nn=swap(r["name"],target)
+        if not nn or nn in seen: continue
+        seen.add(nn)
+        m=_prep_one(aid, nn, None, lib, lib_only)
+        if m: picked.append(m)
+    # ── ② 补量兜底：不改名、原样用别的产品素材 ──
+    topup=0
+    if len(picked)<need:
+        for r in rank:
+            if len(picked)>=need: break
+            raw=r["name"]
+            if not raw: continue
+            fn = raw if raw.lower().endswith(".mp4") else raw+".mp4"
+            if fn in seen: continue          # 已被主路(换名后)或本轮用过
+            if is_blacklisted(raw, bl): continue
+            seen.add(fn)
+            m=_prep_one(aid, fn, None, lib, lib_only)
+            if m: picked.append(m); topup+=1
+    if skipped: print(f"  [黑名单] 跳过 {len(skipped)} 个: {skipped}")
+    if topup: print(f"  [补量] 主路不足 need={need}，原样补 {topup} 个非 {target} 素材")
+    return picked
+
+def load_create_module(token):
+    """加载 tiktok-create-ios-ad 模块，并把该模块的 TOKEN 替换为当前账户 token。"""
+    spec=importlib.util.spec_from_file_location("iosad_dyn",os.path.join(WS,"scripts","tiktok-create-ios-ad.py"))
+    m=importlib.util.module_from_spec(spec)
+    os.environ["TIKTOK_ACCESS_TOKEN"]=token   # 模块 import 时读 os.environ["TIKTOK_ACCESS_TOKEN"]
+    spec.loader.exec_module(m)
+    m.TOKEN=token                             # 双保险：显式覆盖
+    return m
+
+def main():
+    global TK, DATE_TAG
+    d=today_bj(); dt=datetime.datetime.strptime(d,"%Y-%m-%d"); DATE_TAG=dt.strftime("%y%m%d")
+    plans = PLANS_TEST if TEST else PLANS
+    op_status = "DISABLE" if TEST else "ENABLE"
+    need = 10
+
+    skip_fp=os.path.join(WS,"scripts",".skip_build_date_ios_newacct")
+    if not TEST and os.path.exists(skip_fp) and open(skip_fp).read().strip()==d:
+        print(f"跳过新建（标记 {d}）")
+        if not DRY:
+            os.remove(skip_fp); feishu(f"🌙 {d} 新增 iOS 账户建广告：按你要求今天跳过。标记已清除。")
+        return
+
+    accounts=load_accounts()
+    rank,dates=build_rank()
+    bl=load_blacklist()
+    paused=load_paused()
+    tag = "（DRY）" if DRY else ("（TEST DISABLE）" if TEST else "")
+    if LIB_ONLY: tag += "（纯库内）"
+    lines=[f"🌙 TikTok 新增 iOS 账户建广告 {d}{tag}",
+           f"账户数: {len(accounts)}（Mora iOS）",
+           f"素材榜窗口(TT): {dates[0]}~{dates[-1]}（3天），全局{len(rank)}条",
+           f"素材黑名单: {len(bl)} 条"]
+    if paused: lines.append(f"⛔️ 暂停: {sorted(paused)}")
+
+    total_built=0; skipped_dup=0; zero_mat=[]
+
+    for acc in accounts:
+        pname=acc["product"]; aid=acc["advertiser_id"]; seg=acc["seg"]; cname_pref=acc["cname"]
+        TK=TOKENS.get(acc["token_env"],"")
+        if not TK:
+            lines.append(f"\n{pname}: ⚠️ token {acc['token_env']} 缺失，跳过"); continue
+        if pname in paused:
+            lines.append(f"\n{pname}: ⛔️ 已暂停"); continue
+
+        lib=tt_lib_index(aid)
+        if DRY:
+            mats=resolve(aid,rank,seg,need,lib=lib,bl=bl)
+            hits=sum(1 for m in mats if m[2] in lib)
+            lines.append(f"\n{pname} ({aid}): TT库{len(lib)}个，备好 {len(mats)} 条（库内直取 {hits}）")
+            for m in mats: lines.append(f"      - {m[2]}")
+            continue
+
+        iosad=load_create_module(TK)
+        exist=existing_campaign_names(aid)
+        if exist is None:
+            lines.append(f"\n{pname}: ⚠️ 查重失败，不做幂等"); exist=set()
+        plan_names=[f"{cname_pref}_syh_{DATE_TAG}_{opt}_{seq}" for opt,seq,_ in plans]
+        if exist and all(n in exist for n in plan_names):
+            lines.append(f"\n{pname}: 今日 campaign 均已存在，跳过（幂等）"); skipped_dup+=len(plans); continue
+
+        tt=resolve(aid,rank,seg,need,lib=lib,bl=bl)
+        lines.append(f"\n{pname} ({aid}): TT库{len(lib)}个，备好素材 {len(tt)} 条")
+        if not tt:
+            lines.append(f"  ⚠️ 0 素材，跳过该产品，不建空壳"); zero_mat.append(pname); continue
+        for opt,seq,bid in plans:
+            cname=f"{cname_pref}_syh_{DATE_TAG}_{opt}_{seq}"
+            if cname in exist:
+                lines.append(f"  ⏭️ {cname} 已存在，跳过"); skipped_dup+=1; continue
+            cfg={"advertiser_id":aid,"app_id":acc["app_id"],"identity_id":acc["identity"],
+                 "opt_type":opt,"bid":bid,"campaign_name":cname,"budget":50,
+                 "op_status":op_status,"materials":tt}
+            # 账户级 iOS14 参数覆盖（Mora 手动建广告对齐：非专属系列 + 保留SKAN + NORMAL版位）
+            for k in ("is_advanced_dedicated_campaign","disable_skan_campaign",
+                      "campaign_app_profile_page_state","placement_type","placements"):
+                if k in acc: cfg[k]=acc[k]
+            # iOS 模块 identity_bc_id 用全局 IDENTITY_BC_ID；本账户 identity 属独立 BC，
+            # 建广告时通过覆盖模块 IDENTITY_BC_ID 传入账户自己的 bc（见 load_create_module 后覆盖）
+            try:
+                iosad.IDENTITY_BC_ID = acc.get("identity_bc_id") or iosad.IDENTITY_BC_ID
+                res = iosad.main(cfg)
+                if isinstance(res, dict) and not res.get("ok"):
+                    msg = (res.get("message") or "").lower()
+                    # 优化目标不支持（如新账户暂不支持 VO）→ 优雅跳过，不计失败、空壳已在模块内删除
+                    if "optimization value is not supported" in msg or "optimization goal" in msg:
+                        lines.append(f"  ⏭️ {cname}: 优化目标[{opt}]该账户暂不支持，跳过（空壳已清）")
+                    else:
+                        lines.append(f"  ❌ {cname} 建失败[{res.get('stage')}]: {res.get('code')} {res.get('message')}")
+                else:
+                    total_built+=1; exist.add(cname)
+                    lines.append(f"  ✅ {cname} bid={bid} 素材{len(tt)} [{op_status}]")
+            except Exception as e:
+                lines.append(f"  ❌ {cname} 建失败: {e}")
+            time.sleep(2)
+
+    if DRY:
+        print("\n".join(lines)); feishu("\n".join(lines)); return
+    lines.append(f"\n共建成 {total_built} 条 [{op_status}]"+(f"（幂等跳过 {skipped_dup}）" if skipped_dup else ""))
+    if zero_mat:
+        lines.append(f"⚠️ 0 素材跳过（未建，避免空壳）: {zero_mat}")
+    print("\n".join(lines)); feishu("\n".join(lines))
+
+if __name__=="__main__":
+    try:
+        main()
+    except Exception as e:
+        import traceback; err=traceback.format_exc()[-800:]; print(err)
+        feishu(f"🛑 tiktok-ios-newacct-build 异常中止\n{err[-400:]}"); sys.exit(1)

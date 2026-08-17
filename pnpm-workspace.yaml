@@ -1,0 +1,14 @@
+# pnpm workspace —— 仅纳管新单体仓库的 apps/services/packages。
+# 旧的 dashboard/ 与 dataserver/ 在迁移完成前保持独立，不进 workspace。
+packages:
+  - 'apps/*'
+  - 'services/*'
+  - 'packages/*'
+
+# sharp 是 next/image 的可选原生依赖；数据中心不用图片优化，明确跳过其构建脚本。
+# esbuild 是 tsx（scheduler 服务运行时）的原生依赖，需允许安装其二进制。
+# protobufjs 是飞书 SDK（@larksuiteoapi/node-sdk）的间接依赖，纯 JS、无需跑 postinstall。
+allowBuilds:
+  esbuild: true
+  protobufjs: false
+  sharp: false

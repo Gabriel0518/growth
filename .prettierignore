@@ -1,0 +1,21 @@
+**/dist/
+**/.next/
+**/next-env.d.ts
+**/node_modules/
+pnpm-lock.yaml
+
+# 历史存档：仅为留存历史而保留，既不 lint 也不格式化（与 eslint.config.mjs 的
+# ignores: ['archive/**'] 对齐）。
+#
+# ⚠️ 本文件是 gitignore 语义：不带前导斜杠的 pattern 在【任意层级】都匹配。
+# 旧栈那几个目录名（dashboard/ dataserver/ analysis/ config/ docs/）不能直接写——
+# 它们早已整体移进 archive/，写在这里既盖不住本意，又会误伤活代码：
+# 例如 `dashboard/` 会把 apps/web/src/lib/dashboard/ 一并吃掉（活代码被静默跳过）。
+# 故统一用 archive/ 一条覆盖旧栈，需要限定根目录的一律加前导斜杠。
+archive/
+
+# 旧栈遗留的抓取脚本（未迁移，不格式化）。锚定根目录，避免误伤嵌套同名目录。
+/scripts/
+
+# 既有文档（非本次改造产物，不重排）。锚定根目录。
+/README.md

@@ -1,0 +1,1558 @@
+{
+  "date": "2026-05-14",
+  "data": [
+    {
+      "product": "Dora iOS",
+      "campaign": "dora_ios_AEO_MCY_1106_",
+      "channel": "FB",
+      "cost": 5544.94,
+      "impressions": 253154,
+      "clicks": 2463
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "3.14 AEOc cbo cyl",
+      "channel": "FB",
+      "cost": 1185.04,
+      "impressions": 44161,
+      "clicks": 931
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora_ios_wcx_abo_aeo_1118",
+      "channel": "FB",
+      "cost": 1014.81,
+      "impressions": 42983,
+      "clicks": 724
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "dora_ios_AEO_MCY_1115",
+      "channel": "FB",
+      "cost": 822.12,
+      "impressions": 37033,
+      "clicks": 614
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "3.10 AEOc cyl",
+      "channel": "FB",
+      "cost": 793.49,
+      "impressions": 26251,
+      "clicks": 663
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni And_syh_260306_AEO",
+      "channel": "FB",
+      "cost": 770.39,
+      "impressions": 22310,
+      "clicks": 632
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "4.18 VOc cyl",
+      "channel": "FB",
+      "cost": 716.55,
+      "impressions": 21899,
+      "clicks": 515
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora iOS_syh_260127_AEO",
+      "channel": "FB",
+      "cost": 646.57,
+      "impressions": 31968,
+      "clicks": 754
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma iOS_syh_260422_AEO",
+      "channel": "FB",
+      "cost": 643.23,
+      "impressions": 23761,
+      "clicks": 456
+    },
+    {
+      "product": "Doni",
+      "campaign": "11.14-Doni-and-AEO-zm1",
+      "channel": "FB",
+      "cost": 566.54,
+      "impressions": 11322,
+      "clicks": 268
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi ios_wvv_260501_aeo_1",
+      "channel": "FB",
+      "cost": 563.31,
+      "impressions": 16373,
+      "clicks": 480
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0418-Kira-and-AEO-zm1",
+      "channel": "FB",
+      "cost": 522.18,
+      "impressions": 10042,
+      "clicks": 334
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora iOS_syh_260130_VO",
+      "channel": "FB",
+      "cost": 514.32,
+      "impressions": 13835,
+      "clicks": 259
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora_ios_10.29 AEO_Enzo_zmf",
+      "channel": "FB",
+      "cost": 501.76,
+      "impressions": 20152,
+      "clicks": 500
+    },
+    {
+      "product": "Doni",
+      "campaign": "0424-lhfb-Doni and-//cj",
+      "channel": "FB",
+      "cost": 499.91,
+      "impressions": 10545,
+      "clicks": 237
+    },
+    {
+      "product": "Doni",
+      "campaign": "0305_ AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 465.84,
+      "impressions": 13058,
+      "clicks": 342
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora_ios_zmf_abo_vo_0421_1",
+      "channel": "FB",
+      "cost": 446.95,
+      "impressions": 12932,
+      "clicks": 361
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "5.14 AEOc 测新",
+      "channel": "FB",
+      "cost": 446.82,
+      "impressions": 5872,
+      "clicks": 129
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0424-lhfb-Kira and// aeo",
+      "channel": "FB",
+      "cost": 430.74,
+      "impressions": 11392,
+      "clicks": 288
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0425-Romi-ios-VO-cbo-zm1",
+      "channel": "FB",
+      "cost": 429.3,
+      "impressions": 13249,
+      "clicks": 368
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "0418-lhfb-Dora ios-//aaa vo",
+      "channel": "FB",
+      "cost": 415.43,
+      "impressions": 14766,
+      "clicks": 362
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora_ios_9.29 AEO_zmf",
+      "channel": "FB",
+      "cost": 396.18,
+      "impressions": 10336,
+      "clicks": 262
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "0205-1-Jovia-and-AEO-zm1",
+      "channel": "FB",
+      "cost": 387.01,
+      "impressions": 5009,
+      "clicks": 168
+    },
+    {
+      "product": "GraceChat",
+      "campaign": "0331-lhfb-GC ios-VO",
+      "channel": "FB",
+      "cost": 386.49,
+      "impressions": 5311,
+      "clicks": 182
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "5.13 VOc cyl",
+      "channel": "FB",
+      "cost": 374.33,
+      "impressions": 11423,
+      "clicks": 227
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "0124-Dora-ios-AEO-zm1",
+      "channel": "FB",
+      "cost": 344.58,
+      "impressions": 12941,
+      "clicks": 337
+    },
+    {
+      "product": "Doni",
+      "campaign": "11.28-Doni-and-AEO-zm1",
+      "channel": "FB",
+      "cost": 342.67,
+      "impressions": 9954,
+      "clicks": 205
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi iOS_syh_260416_VO",
+      "channel": "FB",
+      "cost": 321.86,
+      "impressions": 9921,
+      "clicks": 240
+    },
+    {
+      "product": "Luma",
+      "campaign": "0423-1-Luma-ios-VO-cbo-zm1",
+      "channel": "FB",
+      "cost": 313.54,
+      "impressions": 9469,
+      "clicks": 238
+    },
+    {
+      "product": "Kira And",
+      "campaign": "5.14 AEOc cyl",
+      "channel": "FB",
+      "cost": 308.46,
+      "impressions": 9212,
+      "clicks": 218
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0422-1226-2-Romi-ios-AEO-zm1",
+      "channel": "FB",
+      "cost": 306.96,
+      "impressions": 10617,
+      "clicks": 216
+    },
+    {
+      "product": "GraceChat",
+      "campaign": "0227-lhfb-GC ios-AEO",
+      "channel": "FB",
+      "cost": 301.79,
+      "impressions": 15090,
+      "clicks": 338
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora ios_wvv_0417_aeo_1",
+      "channel": "FB",
+      "cost": 296.45,
+      "impressions": 11009,
+      "clicks": 303
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "5.13 AEOc value cyl",
+      "channel": "FB",
+      "cost": 294.85,
+      "impressions": 8944,
+      "clicks": 252
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "5.14 AEOc cyl",
+      "channel": "FB",
+      "cost": 292.82,
+      "impressions": 5212,
+      "clicks": 132
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi iOS_syh_260416_AEO",
+      "channel": "FB",
+      "cost": 270.98,
+      "impressions": 12394,
+      "clicks": 487
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_vo_cbo_0319_2",
+      "channel": "FB",
+      "cost": 258.35,
+      "impressions": 5571,
+      "clicks": 239
+    },
+    {
+      "product": "Luma",
+      "campaign": "0219_Luma_iOS_AEO_MCY",
+      "channel": "FB",
+      "cost": 257.3,
+      "impressions": 8724,
+      "clicks": 289
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "0512-1-Jovia-and-AEO-zm1",
+      "channel": "FB",
+      "cost": 240.63,
+      "impressions": 6866,
+      "clicks": 165
+    },
+    {
+      "product": "Luma",
+      "campaign": "0408_Luma_iOS_AEO_MCY",
+      "channel": "FB",
+      "cost": 234.9,
+      "impressions": 7122,
+      "clicks": 377
+    },
+    {
+      "product": "Doni",
+      "campaign": "0418-Doni-and-VO-abo-zm1",
+      "channel": "FB",
+      "cost": 222.27,
+      "impressions": 4889,
+      "clicks": 157
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora_ios_wcx_aeo_1028_107",
+      "channel": "FB",
+      "cost": 218.61,
+      "impressions": 11567,
+      "clicks": 169
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_wvv_20260429_AEO_1",
+      "channel": "FB",
+      "cost": 216.04,
+      "impressions": 8850,
+      "clicks": 307
+    },
+    {
+      "product": "Doni",
+      "campaign": "11.13-Doni-and-AAAAEO-zm1",
+      "channel": "FB",
+      "cost": 202.1,
+      "impressions": 6257,
+      "clicks": 282
+    },
+    {
+      "product": "GraceChat",
+      "campaign": "0501-lhfb-GC ios-aaa aeo1",
+      "channel": "FB",
+      "cost": 200.96,
+      "impressions": 5270,
+      "clicks": 173
+    },
+    {
+      "product": "Doni",
+      "campaign": "0110_AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 198.15,
+      "impressions": 3759,
+      "clicks": 220
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "0514-Jovia-and-AEO-abo-zm1",
+      "channel": "FB",
+      "cost": 197.85,
+      "impressions": 4481,
+      "clicks": 110
+    },
+    {
+      "product": "Doni",
+      "campaign": "0501-lhfb-Doni and-//aaa aeo 01",
+      "channel": "FB",
+      "cost": 197.25,
+      "impressions": 6471,
+      "clicks": 131
+    },
+    {
+      "product": "Luma",
+      "campaign": "0417-2-Luma-ios-VO-cbo-zm1",
+      "channel": "FB",
+      "cost": 195.34,
+      "impressions": 4834,
+      "clicks": 142
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "0416-Jovia-and-AEO-cbo-zm1",
+      "channel": "FB",
+      "cost": 190.45,
+      "impressions": 3602,
+      "clicks": 122
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_zmf_abo_1220_2",
+      "channel": "FB",
+      "cost": 186.86,
+      "impressions": 8150,
+      "clicks": 260
+    },
+    {
+      "product": "Luma",
+      "campaign": "1230_Luma_iOS_AEO_MCY",
+      "channel": "FB",
+      "cost": 186.62,
+      "impressions": 2466,
+      "clicks": 67
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_zjc_20260502_AEO_1",
+      "channel": "FB",
+      "cost": 185.21,
+      "impressions": 5730,
+      "clicks": 215
+    },
+    {
+      "product": "GraceChat",
+      "campaign": "0627-2-GC-ios-AEO-zm1",
+      "channel": "FB",
+      "cost": 182.97,
+      "impressions": 5354,
+      "clicks": 152
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "5.13 VOc cyl",
+      "channel": "FB",
+      "cost": 170.77,
+      "impressions": 5523,
+      "clicks": 120
+    },
+    {
+      "product": "GraceChat",
+      "campaign": "0416-2-GC-ios-AEO-cbo-zm1",
+      "channel": "FB",
+      "cost": 163.42,
+      "impressions": 4927,
+      "clicks": 158
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_zjc_20260511_VO_CBO",
+      "channel": "FB",
+      "cost": 156.16,
+      "impressions": 6175,
+      "clicks": 122
+    },
+    {
+      "product": "Luma",
+      "campaign": "0422-lhfb-Luma ios-//aeo",
+      "channel": "FB",
+      "cost": 154.15,
+      "impressions": 4057,
+      "clicks": 184
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_cy1_20260512_VO-cbo",
+      "channel": "FB",
+      "cost": 150.69,
+      "impressions": 3501,
+      "clicks": 123
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_zjc_20260502_VO_ABO",
+      "channel": "FB",
+      "cost": 150.52,
+      "impressions": 3644,
+      "clicks": 81
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0513-Romi-ios-AEO-abo-zm1",
+      "channel": "FB",
+      "cost": 143.3,
+      "impressions": 5897,
+      "clicks": 92
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira and_dsk_20260513_AEO_0509KN测新",
+      "channel": "FB",
+      "cost": 141.14,
+      "impressions": 3887,
+      "clicks": 227
+    },
+    {
+      "product": "Kira And",
+      "campaign": "kira And_wvv_260514_aeo_测素材",
+      "channel": "FB",
+      "cost": 138.94,
+      "impressions": 2150,
+      "clicks": 37
+    },
+    {
+      "product": "Doni",
+      "campaign": "0514-Doni-and-AEO-abo-zm1",
+      "channel": "FB",
+      "cost": 138.17,
+      "impressions": 2717,
+      "clicks": 66
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_vo_cbo_0325_1",
+      "channel": "FB",
+      "cost": 136.67,
+      "impressions": 2023,
+      "clicks": 66
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_cy1_0419_aeo",
+      "channel": "FB",
+      "cost": 126.81,
+      "impressions": 4279,
+      "clicks": 138
+    },
+    {
+      "product": "Luma",
+      "campaign": "0407_Luma_iOS_AEO_MCY",
+      "channel": "FB",
+      "cost": 126.47,
+      "impressions": 2507,
+      "clicks": 67
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0514_and_Kira测新2.0_ymt_1",
+      "channel": "FB",
+      "cost": 122.79,
+      "impressions": 3403,
+      "clicks": 68
+    },
+    {
+      "product": "Doni",
+      "campaign": "0512-2-Doni-and-AEO-abo-zm1",
+      "channel": "FB",
+      "cost": 115.23,
+      "impressions": 4096,
+      "clicks": 65
+    },
+    {
+      "product": "Kira And",
+      "campaign": "kira and_zjc_20260508_AEO_CBO-xscTset",
+      "channel": "FB",
+      "cost": 113.99,
+      "impressions": 2380,
+      "clicks": 59
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_wvv_20260421_AEO_1",
+      "channel": "FB",
+      "cost": 113.67,
+      "impressions": 3443,
+      "clicks": 87
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "0429-Dora-ios-VO-cbo-zm1",
+      "channel": "FB",
+      "cost": 111.85,
+      "impressions": 2897,
+      "clicks": 82
+    },
+    {
+      "product": "Doni",
+      "campaign": "0408_ AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 111.22,
+      "impressions": 5814,
+      "clicks": 136
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_zmf_abo_0331_1",
+      "channel": "FB",
+      "cost": 110.94,
+      "impressions": 3952,
+      "clicks": 71
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and_cy1_20260512_AEO_常规",
+      "channel": "FB",
+      "cost": 108.09,
+      "impressions": 4574,
+      "clicks": 122
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0506YM测_Kira and_zm1_abo_0514",
+      "channel": "FB",
+      "cost": 103.45,
+      "impressions": 2663,
+      "clicks": 68
+    },
+    {
+      "product": "Doni",
+      "campaign": "0326_ AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 100.25,
+      "impressions": 3186,
+      "clicks": 57
+    },
+    {
+      "product": "Doni",
+      "campaign": "0119_AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 99.87,
+      "impressions": 2405,
+      "clicks": 56
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0416-22-Romi-ios-VO-cbo-zm1",
+      "channel": "FB",
+      "cost": 98.2,
+      "impressions": 3257,
+      "clicks": 63
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0512-Kira-and-AEO-zm1",
+      "channel": "FB",
+      "cost": 97.24,
+      "impressions": 2975,
+      "clicks": 73
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "0203-1-Jovia-and-AAAAEO-zm1",
+      "channel": "FB",
+      "cost": 97.21,
+      "impressions": 1868,
+      "clicks": 50
+    },
+    {
+      "product": "Kira And",
+      "campaign": "kira and_zjc_20260505_VO_CBO",
+      "channel": "FB",
+      "cost": 97.14,
+      "impressions": 1013,
+      "clicks": 26
+    },
+    {
+      "product": "Doni",
+      "campaign": "0219_AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 93.37,
+      "impressions": 2855,
+      "clicks": 63
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi ios_wvv_260514_vo_1",
+      "channel": "FB",
+      "cost": 92.08,
+      "impressions": 2625,
+      "clicks": 64
+    },
+    {
+      "product": "Doni",
+      "campaign": "1212_AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 91.37,
+      "impressions": 1790,
+      "clicks": 24
+    },
+    {
+      "product": "Doni",
+      "campaign": "0331_ AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 91.36,
+      "impressions": 2233,
+      "clicks": 70
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and_cy1_20260512_VO_常规",
+      "channel": "FB",
+      "cost": 90.39,
+      "impressions": 1544,
+      "clicks": 29
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni And_wvv_260513_aeo_1",
+      "channel": "FB",
+      "cost": 87.8,
+      "impressions": 2822,
+      "clicks": 66
+    },
+    {
+      "product": "GraceChat",
+      "campaign": "0416-1-GC-ios-VO-cbo-zm1",
+      "channel": "FB",
+      "cost": 86.26,
+      "impressions": 1408,
+      "clicks": 49
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni_and_zmf_abo_aeo_0512_2",
+      "channel": "FB",
+      "cost": 85.52,
+      "impressions": 2009,
+      "clicks": 49
+    },
+    {
+      "product": "Kira And",
+      "campaign": "kira and_zjc_20260513_AEO_CBO-xscTset",
+      "channel": "FB",
+      "cost": 77.2,
+      "impressions": 772,
+      "clicks": 28
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_vo_abo_0411_1",
+      "channel": "FB",
+      "cost": 67.6,
+      "impressions": 1869,
+      "clicks": 34
+    },
+    {
+      "product": "Doni",
+      "campaign": "0327_ AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 64.75,
+      "impressions": 2974,
+      "clicks": 57
+    },
+    {
+      "product": "Kira And",
+      "campaign": "kira And_wvv_260512_aeo_测素材",
+      "channel": "FB",
+      "cost": 59.29,
+      "impressions": 657,
+      "clicks": 23
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and_zjc_260513_VO_CBO",
+      "channel": "FB",
+      "cost": 53.76,
+      "impressions": 994,
+      "clicks": 11
+    },
+    {
+      "product": "Doni",
+      "campaign": "0401_ AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 53.71,
+      "impressions": 3186,
+      "clicks": 36
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0505YM测_Kira and_zm1_abo_0513",
+      "channel": "FB",
+      "cost": 53.45,
+      "impressions": 1339,
+      "clicks": 21
+    },
+    {
+      "product": "Doni",
+      "campaign": "20251219-Doni-and-aeo-cww-wcx",
+      "channel": "FB",
+      "cost": 53.18,
+      "impressions": 1136,
+      "clicks": 25
+    },
+    {
+      "product": "Doni",
+      "campaign": "0415_ VO_MCY_Doni",
+      "channel": "FB",
+      "cost": 51.87,
+      "impressions": 857,
+      "clicks": 18
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0513ZHT_and_Kira测新2.0_ymt_1",
+      "channel": "FB",
+      "cost": 51.81,
+      "impressions": 2010,
+      "clicks": 49
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0514_and_kira_ymt_aeo_02/ff",
+      "channel": "FB",
+      "cost": 51.56,
+      "impressions": 1994,
+      "clicks": 55
+    },
+    {
+      "product": "GraceChat",
+      "campaign": "0320-GC-ios-VO-zm1",
+      "channel": "FB",
+      "cost": 51.42,
+      "impressions": 816,
+      "clicks": 20
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_W2A_zmf_aeo_abo_0424_1",
+      "channel": "FB",
+      "cost": 50.88,
+      "impressions": 943,
+      "clicks": 53
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0510ZHT_and_Kira_ymt_1//ff",
+      "channel": "FB",
+      "cost": 49.86,
+      "impressions": 1852,
+      "clicks": 40
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0511_and_Kira_ymt_1/ff",
+      "channel": "FB",
+      "cost": 49.61,
+      "impressions": 695,
+      "clicks": 23
+    },
+    {
+      "product": "Doni",
+      "campaign": "0514_and_Doni_ymt_aeo_03/ff",
+      "channel": "FB",
+      "cost": 49.42,
+      "impressions": 1555,
+      "clicks": 21
+    },
+    {
+      "product": "Doni",
+      "campaign": "0424_ AEO_MCY_Doni",
+      "channel": "FB",
+      "cost": 49.38,
+      "impressions": 1375,
+      "clicks": 34
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and_cy1_20260511_AEO_常规",
+      "channel": "FB",
+      "cost": 48.92,
+      "impressions": 1778,
+      "clicks": 40
+    },
+    {
+      "product": "Kira And",
+      "campaign": "kira and_zjc_20260513_AEO_CBO",
+      "channel": "FB",
+      "cost": 48.72,
+      "impressions": 1183,
+      "clicks": 50
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0512_and_Kira_ymt_2/ff",
+      "channel": "FB",
+      "cost": 47.2,
+      "impressions": 1881,
+      "clicks": 48
+    },
+    {
+      "product": "Doni",
+      "campaign": "0414_ VO_MCY_Doni",
+      "channel": "FB",
+      "cost": 46.02,
+      "impressions": 1563,
+      "clicks": 38
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira And_wvv_20260514_VO_CBO_1",
+      "channel": "FB",
+      "cost": 45.87,
+      "impressions": 479,
+      "clicks": 10
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and_cy1_20260409_VO_定投",
+      "channel": "FB",
+      "cost": 42.42,
+      "impressions": 630,
+      "clicks": 16
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_purchase_abo_0320_1",
+      "channel": "FB",
+      "cost": 40.5,
+      "impressions": 1500,
+      "clicks": 21
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0512_Kira_and_ymt_cbo_vo_ff-03",
+      "channel": "FB",
+      "cost": 35.83,
+      "impressions": 627,
+      "clicks": 8
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and_cy1_20260506_AEO_常规",
+      "channel": "FB",
+      "cost": 32.02,
+      "impressions": 1346,
+      "clicks": 19
+    },
+    {
+      "product": "Nalo: Meet, Swipe & Chat",
+      "campaign": "0513_and_Nola_ymt_install //ff",
+      "channel": "FB",
+      "cost": 27.1,
+      "impressions": 1553,
+      "clicks": 163
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0514_and_kira_ymt_aeo_1/ff",
+      "channel": "FB",
+      "cost": 23.42,
+      "impressions": 660,
+      "clicks": 13
+    },
+    {
+      "product": "Doni",
+      "campaign": "0511_and_Doni_ymt_01ff",
+      "channel": "FB",
+      "cost": 20.79,
+      "impressions": 553,
+      "clicks": 6
+    },
+    {
+      "product": "Kira And",
+      "campaign": "0421-Kira-and-aeo-ymt//ff",
+      "channel": "FB",
+      "cost": 19.26,
+      "impressions": 526,
+      "clicks": 13
+    },
+    {
+      "product": "Nalo: Meet, Swipe & Chat",
+      "campaign": "Nalo and_zjc_20260513_CPI_ABO",
+      "channel": "FB",
+      "cost": 12.06,
+      "impressions": 645,
+      "clicks": 83
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira and_dsk_20260512_AEO_测新",
+      "channel": "FB",
+      "cost": 0.52,
+      "impressions": 30,
+      "clicks": 1
+    },
+    {
+      "product": "Doni",
+      "campaign": "20260127-gg-Doni-And-purchase-wcx",
+      "channel": "GG",
+      "cost": 797.4163,
+      "impressions": 58596,
+      "clicks": 536
+    },
+    {
+      "product": "Doni",
+      "campaign": "20260101-gg-Doni-And-aeo-手动nv-wcx",
+      "channel": "GG",
+      "cost": 636.3917,
+      "impressions": 35308,
+      "clicks": 448
+    },
+    {
+      "product": "Doni",
+      "campaign": "0412-lhgg-Doni and-//",
+      "channel": "GG",
+      "cost": 478.3867,
+      "impressions": 35569,
+      "clicks": 526
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni_and_zmf_2.5_purchase_0227_1-gg",
+      "channel": "GG",
+      "cost": 401.5619,
+      "impressions": 25713,
+      "clicks": 351
+    },
+    {
+      "product": "Doni",
+      "campaign": "0409-GG-Doni-and-appflyer-2.5-zjc",
+      "channel": "GG",
+      "cost": 292.8695,
+      "impressions": 19673,
+      "clicks": 197
+    },
+    {
+      "product": "Doni",
+      "campaign": "0513-lhgg-Doni and-//3.0",
+      "channel": "GG",
+      "cost": 151.9611,
+      "impressions": 12735,
+      "clicks": 505
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "JoviaAnd_syh_260312_AEO",
+      "channel": "GG",
+      "cost": 132.3847,
+      "impressions": 4690,
+      "clicks": 157
+    },
+    {
+      "product": "Jovia And",
+      "campaign": "Jovia And_wvv_20260513_GG_1",
+      "channel": "GG",
+      "cost": 106.6543,
+      "impressions": 1421,
+      "clicks": 57
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0312-lhtt-romi //s+ vo",
+      "channel": "TT",
+      "cost": 1384.53,
+      "impressions": 140541,
+      "clicks": 794
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora iOS_syh_260122_AEO_2",
+      "channel": "TT",
+      "cost": 1202.62,
+      "impressions": 151590,
+      "clicks": 773
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0411-lhtt-romi //s+ cj",
+      "channel": "TT",
+      "cost": 1154.06,
+      "impressions": 199488,
+      "clicks": 1421
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_wcx_aeo_1119_smart",
+      "channel": "TT",
+      "cost": 888.27,
+      "impressions": 98726,
+      "clicks": 710
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_wcx_aeo_1225_smart",
+      "channel": "TT",
+      "cost": 856.24,
+      "impressions": 70789,
+      "clicks": 549
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0410-lhtt-Romi ios-//s++ cj",
+      "channel": "TT",
+      "cost": 682.88,
+      "impressions": 153946,
+      "clicks": 1081
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_wcx_aeo_0120_smart_02",
+      "channel": "TT",
+      "cost": 437.25,
+      "impressions": 56788,
+      "clicks": 425
+    },
+    {
+      "product": "Luma",
+      "campaign": "0509-lhtt-Luma 25-//s++ vo",
+      "channel": "TT",
+      "cost": 429.83,
+      "impressions": 60130,
+      "clicks": 232
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_smart_troas_1217_01_tt",
+      "channel": "TT",
+      "cost": 406.23,
+      "impressions": 39771,
+      "clicks": 260
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira And_syh_260410_AEO",
+      "channel": "TT",
+      "cost": 280.72,
+      "impressions": 24173,
+      "clicks": 193
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni_安卓_MCY_1116",
+      "channel": "TT",
+      "cost": 254.97,
+      "impressions": 22174,
+      "clicks": 95
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni And_syh_260306_VO",
+      "channel": "TT",
+      "cost": 237.26,
+      "impressions": 22646,
+      "clicks": 118
+    },
+    {
+      "product": "Doni",
+      "campaign": "11.20-TT-Doni-and-AEO-smart-zm1",
+      "channel": "TT",
+      "cost": 220.26,
+      "impressions": 19486,
+      "clicks": 97
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0308-lhtt-romi //s+ cj 01",
+      "channel": "TT",
+      "cost": 198.68,
+      "impressions": 30063,
+      "clicks": 149
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_smart_troas_1213_01_tt",
+      "channel": "TT",
+      "cost": 181.45,
+      "impressions": 12032,
+      "clicks": 80
+    },
+    {
+      "product": "Doni",
+      "campaign": "0130-2-TT-Doni-and-s+VO-zm1",
+      "channel": "TT",
+      "cost": 180.47,
+      "impressions": 18113,
+      "clicks": 61
+    },
+    {
+      "product": "Luma",
+      "campaign": "0509-lhtt-Luma 25-//s++ cj",
+      "channel": "TT",
+      "cost": 150.82,
+      "impressions": 26300,
+      "clicks": 171
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and-zm1-260321-1-VO-TT",
+      "channel": "TT",
+      "cost": 150,
+      "impressions": 8260,
+      "clicks": 42
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_wvv_20260514_aeo_s+升级_3",
+      "channel": "TT",
+      "cost": 126.56,
+      "impressions": 8894,
+      "clicks": 79
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora iOS_syh_260507_AEO_1",
+      "channel": "TT",
+      "cost": 122.75,
+      "impressions": 8309,
+      "clicks": 61
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni_安卓_MCY_1218_2",
+      "channel": "TT",
+      "cost": 120,
+      "impressions": 9536,
+      "clicks": 29
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0228-lhtt-romi //s+ aeo",
+      "channel": "TT",
+      "cost": 116.98,
+      "impressions": 12453,
+      "clicks": 65
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0304-lhtt-romi //s+ aeo",
+      "channel": "TT",
+      "cost": 109.19,
+      "impressions": 16783,
+      "clicks": 106
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_smart_purchase_1128_03_tt",
+      "channel": "TT",
+      "cost": 100.1,
+      "impressions": 7128,
+      "clicks": 66
+    },
+    {
+      "product": null,
+      "campaign": "0513 PWA-ymt_link2.0 新素材",
+      "channel": "TT",
+      "cost": 100,
+      "impressions": 11456,
+      "clicks": 79
+    },
+    {
+      "product": null,
+      "campaign": "PWA_0513_ymt_link2.0 //新素材",
+      "channel": "TT",
+      "cost": 100,
+      "impressions": 21828,
+      "clicks": 115
+    },
+    {
+      "product": "Doni",
+      "campaign": "0317-lhtt-Doni and//s+ cj",
+      "channel": "TT",
+      "cost": 90.15,
+      "impressions": 17620,
+      "clicks": 53
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0513-Romi-ios-ymt//tt-ff",
+      "channel": "TT",
+      "cost": 82.33,
+      "impressions": 12429,
+      "clicks": 109
+    },
+    {
+      "product": null,
+      "campaign": "0514_PWA_ymt_link2.0 //新素材14",
+      "channel": "TT",
+      "cost": 81.48,
+      "impressions": 30644,
+      "clicks": 141
+    },
+    {
+      "product": "Dora iOS",
+      "campaign": "Dora iOS_syh_260507_AEO_2",
+      "channel": "TT",
+      "cost": 80.12,
+      "impressions": 5082,
+      "clicks": 19
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_zmf_0408_smart_purchase_01",
+      "channel": "TT",
+      "cost": 79.96,
+      "impressions": 10623,
+      "clicks": 59
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_AEO_MCY_0228_s+_1",
+      "channel": "TT",
+      "cost": 69.93,
+      "impressions": 7588,
+      "clicks": 36
+    },
+    {
+      "product": "Doni",
+      "campaign": "0312-TT-Doni-and-s+VO-zm1",
+      "channel": "TT",
+      "cost": 68.91,
+      "impressions": 4403,
+      "clicks": 10
+    },
+    {
+      "product": null,
+      "campaign": "0514 PWA-ymt old_link_new 新素材14",
+      "channel": "TT",
+      "cost": 60.21,
+      "impressions": 32742,
+      "clicks": 93
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_zmf_0512_smart_purchase_01",
+      "channel": "TT",
+      "cost": 60.19,
+      "impressions": 6492,
+      "clicks": 28
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0404-lhtt-Romi ios-//s++ cj",
+      "channel": "TT",
+      "cost": 60.03,
+      "impressions": 16661,
+      "clicks": 68
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma ios_wvv_20260514_aeo_s+升级_1",
+      "channel": "TT",
+      "cost": 59.96,
+      "impressions": 7065,
+      "clicks": 72
+    },
+    {
+      "product": "Doni",
+      "campaign": "0117-TT原生-Doni-and-s+VO-zm1",
+      "channel": "TT",
+      "cost": 51.52,
+      "impressions": 9608,
+      "clicks": 33
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_zmf_0512_smart_purchase_02",
+      "channel": "TT",
+      "cost": 50.91,
+      "impressions": 5527,
+      "clicks": 41
+    },
+    {
+      "product": "Luma",
+      "campaign": "Luma_ios_AEO_MCY_0127_s+_2",
+      "channel": "TT",
+      "cost": 50,
+      "impressions": 4805,
+      "clicks": 22
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni_安卓_MCY_0124_S+_1",
+      "channel": "TT",
+      "cost": 50,
+      "impressions": 5474,
+      "clicks": 36
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni_安卓_MCY_0124_S+_",
+      "channel": "TT",
+      "cost": 50,
+      "impressions": 4858,
+      "clicks": 18
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni_安卓_MCY_0121_S+_1",
+      "channel": "TT",
+      "cost": 49.91,
+      "impressions": 4420,
+      "clicks": 15
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_smart_purchase_0512_02_tt",
+      "channel": "TT",
+      "cost": 49.79,
+      "impressions": 9093,
+      "clicks": 24
+    },
+    {
+      "product": "Doni",
+      "campaign": "1213-0.6-TT-Doni-and-s+VO-zm1",
+      "channel": "TT",
+      "cost": 49.31,
+      "impressions": 6104,
+      "clicks": 20
+    },
+    {
+      "product": "Doni",
+      "campaign": "0418-1-TT-Doni-and-VO-zm1",
+      "channel": "TT",
+      "cost": 47.86,
+      "impressions": 4058,
+      "clicks": 16
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi_ios_zmf_smart_purchase_0508_02_tt_1",
+      "channel": "TT",
+      "cost": 46.16,
+      "impressions": 7791,
+      "clicks": 33
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and-zm1-260331-1-VO-TT",
+      "channel": "TT",
+      "cost": 44.33,
+      "impressions": 4882,
+      "clicks": 10
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni and-zm1-260411-3-VO-TT_1",
+      "channel": "TT",
+      "cost": 40.89,
+      "impressions": 3809,
+      "clicks": 8
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira And_cy1_260511_AEO",
+      "channel": "TT",
+      "cost": 40,
+      "impressions": 2743,
+      "clicks": 31
+    },
+    {
+      "product": "Kira And",
+      "campaign": "A_Kira And_cy1_260427_AEO",
+      "channel": "TT",
+      "cost": 40,
+      "impressions": 3676,
+      "clicks": 52
+    },
+    {
+      "product": "Kira And",
+      "campaign": "A_Kira And_cy1_260429_AEO_2",
+      "channel": "TT",
+      "cost": 40,
+      "impressions": 3319,
+      "clicks": 48
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira And_cy1_260513_AEO",
+      "channel": "TT",
+      "cost": 40,
+      "impressions": 2205,
+      "clicks": 28
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira And_cy1_260511_AEO_2",
+      "channel": "TT",
+      "cost": 40,
+      "impressions": 3110,
+      "clicks": 64
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira And_cy1_260511_AEO_3",
+      "channel": "TT",
+      "cost": 39.95,
+      "impressions": 4106,
+      "clicks": 57
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira and_zjc_20260513_AEO_S+",
+      "channel": "TT",
+      "cost": 32.77,
+      "impressions": 957,
+      "clicks": 8
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira And_cy1_260513_AEO_2",
+      "channel": "TT",
+      "cost": 30,
+      "impressions": 2174,
+      "clicks": 24
+    },
+    {
+      "product": "Kira And",
+      "campaign": "Kira And_cy1_260513_AEO_3",
+      "channel": "TT",
+      "cost": 30,
+      "impressions": 2024,
+      "clicks": 17
+    },
+    {
+      "product": "Nalo: Meet, Swipe & Chat",
+      "campaign": "Nalo And_syh_260511_Install",
+      "channel": "TT",
+      "cost": 27.89,
+      "impressions": 3378,
+      "clicks": 96
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "Romi ios_dsk_20260513_vo_",
+      "channel": "TT",
+      "cost": 25.07,
+      "impressions": 4843,
+      "clicks": 39
+    },
+    {
+      "product": "Nalo: Meet, Swipe & Chat",
+      "campaign": "应用推广2026051301111--养户",
+      "channel": "TT",
+      "cost": 22.58,
+      "impressions": 3267,
+      "clicks": 29
+    },
+    {
+      "product": "Romi iOS",
+      "campaign": "0404-lhtt-Romi ios-//s++ vo",
+      "channel": "TT",
+      "cost": 13.27,
+      "impressions": 1507,
+      "clicks": 5
+    },
+    {
+      "product": "Luma",
+      "campaign": "0509-lhtt-Luma 26-//s++ cj",
+      "channel": "TT",
+      "cost": 0.7,
+      "impressions": 61,
+      "clicks": 2
+    },
+    {
+      "product": "Doni",
+      "campaign": "Doni ios_dsk_20260513_vo",
+      "channel": "TT",
+      "cost": 0.67,
+      "impressions": 80,
+      "clicks": 1
+    }
+  ],
+  "fetchedAt": "2026-05-27T07:28:02.451Z"
+}

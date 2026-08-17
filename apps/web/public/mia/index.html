@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>投放协同中心</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+/* 四色方案：#FEF8F0 米白铺满，#8CA7F4/#DBF48C/#D98CF4 只做点缀。
+   --ink 是从蓝紫色相压深来的：三个亮色都是浅色，直接当正文一个字都看不清，
+   必须有个深色墨。它是同族的深色版，不是第五个颜色。 */
+:root{
+  --cream:#FEF8F0; --white:#fff;
+  --blue:#8CA7F4; --lime:#DBF48C; --purple:#D98CF4;
+  --blue-soft:#EDF1FE; --lime-soft:#F6FCE9; --purple-soft:#F8EDFE;
+  /* 状态语义色。原色板里没有红和黄，这两个是按同一条构造规律推出来的：
+     #F4DB8C = #DBF48C 字节右移，#F48CA7 = #8CA7F4 字节左移 —— 同族，不是另挑的色。
+     只用于「正常/关注/异常/处理中」这类状态，装饰一律不许用。 */
+  --ok:#DBF48C;   --ok-soft:#F6FCE9;
+  --warn:#F4DB8C; --warn-soft:#FDF8EA;
+  --bad:#F48CA7;  --bad-soft:#FEEDF1;
+  --doing:#8CA7F4; --doing-soft:#EDF1FE;
+  --ink:#2C2A3D; --dim:#6E6A85;
+  --line:#EDE6DB; --line2:#F6F0E7;
+  --shadow:0 1px 2px rgba(44,42,61,.04),0 2px 8px rgba(44,42,61,.05);
+  --shadow-lift:0 4px 16px rgba(140,167,244,.22);
+}
+/* 夜间模式：只改中性色（底/卡片/文字/描边），四个语义亮色（蓝/绿/紫/红/黄）原样保留。
+   这样"配色只用这几个"的约束不破 —— 状态色在深色底上反而更跳、更好认。 */
+:root[data-theme="dark"]{
+  --cream:#181621; --white:#211E2C; --ink:#ECE9F4; --dim:#9A94AD;
+  --line:#332F40; --line2:#2A2734;
+  --blue-soft:#242942; --lime-soft:#26301F; --purple-soft:#2E2340;
+  --ok-soft:#26301F; --warn-soft:#302A1C; --bad-soft:#341F27; --doing-soft:#242942;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 2px 10px rgba(0,0,0,.28);
+  --shadow-lift:0 6px 20px rgba(0,0,0,.45);
+}
+:root[data-theme="dark"] .av img,
+:root[data-theme="dark"] .tag,
+:root[data-theme="dark"] .ch{filter:none}
+/* 状态色在深色底上给文字反色，保证可读 */
+:root[data-theme="dark"] .st,:root[data-theme="dark"] .sev,:root[data-theme="dark"] .pr,
+:root[data-theme="dark"] .share,:root[data-theme="dark"] .badge,:root[data-theme="dark"] .pill,
+:root[data-theme="dark"] .ck.on,:root[data-theme="dark"] .btn.primary{color:#1A1824}
+
+.themebtn{position:absolute;top:0;right:0;width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--line);background:var(--white);cursor:pointer;font-size:16px;line-height:1;
+  display:grid;place-items:center;box-shadow:var(--shadow);transition:transform .15s,border-color .15s,background .15s}
+.themebtn:hover{transform:rotate(-18deg);border-color:var(--blue)}
+header{position:relative}
+body{background:var(--cream);color:var(--ink);
+  font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 22px 70px}
+
+header{text-align:center;margin-bottom:18px}
+h1{font-size:27px;font-weight:700;letter-spacing:-.02em}
+.sub{color:var(--dim);font-size:12.5px;margin-top:5px}
+
+/* 待处理事故常驻条 */
+.strip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px;padding:10px 13px;
+  background:var(--purple-soft);border:1px solid #EFD9FB;border-radius:12px}
+.strip .lab{font-size:12px;font-weight:680;color:var(--ink);white-space:nowrap}
+.strip .ic{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;
+  background:var(--white);border:1px solid var(--line);border-radius:999px;padding:4px 11px;
+  transition:border-color .15s,transform .1s}
+.strip .ic:hover{border-color:var(--purple);transform:translateY(-1px)}
+.strip .ic b{font-weight:640}
+
+/* Tab */
+.tabs{display:flex;gap:6px;justify-content:center;margin-bottom:18px}
+.tab{font:inherit;font-size:13.5px;font-weight:640;cursor:pointer;background:none;border:none;
+  color:var(--dim);padding:8px 16px;border-radius:999px;transition:background .15s,color .15s;
+  display:inline-flex;align-items:center;gap:7px}
+.tab:hover{background:var(--white);color:var(--ink)}
+.tab.on{background:var(--ink);color:var(--cream)}
+.badge{background:var(--purple);color:var(--ink);font-size:10.5px;font-weight:700;
+  border-radius:999px;padding:0 6px;min-width:17px;line-height:17px;text-align:center}
+.tab.on .badge{background:var(--purple);color:var(--ink)}
+
+/* 事故列表 */
+.ilist{display:flex;flex-direction:column;gap:10px}
+.icard{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+  box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;gap:13px;
+  transition:box-shadow .18s,transform .12s,border-color .18s}
+.icard:hover{transform:translateY(-1px);box-shadow:var(--shadow-lift);border-color:var(--blue)}
+.icard.open{border-left:3px solid var(--purple)}
+.icard.doing{border-left:3px solid var(--blue)}
+.icard.done{border-left:3px solid var(--lime);opacity:.72}
+.iemoji{font-size:21px;flex:none;line-height:1}
+.ibody{flex:1;min-width:0}
+.ititle{font-weight:660;font-size:14.5px;margin-bottom:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imeta{font-size:11.5px;color:var(--dim);display:flex;gap:11px;flex-wrap:wrap}
+.st{font-size:11px;font-weight:680;padding:3px 10px;border-radius:999px;color:var(--ink);
+  white-space:nowrap;flex:none}
+.st.open{background:var(--purple)} .st.doing{background:var(--blue)} .st.done{background:var(--lime)}
+
+/* 事故详情：SOP 区块 + 处理记录时间线 */
+.sop{background:var(--cream);border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-top:6px}
+.sop h4{font-size:11px;font-weight:680;color:var(--dim);letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase}
+.sop ol{margin:0 0 0 17px;font-size:12.5px}
+.sop ol li{margin:3px 0}
+.sop p{font-size:12.5px;white-space:pre-wrap}
+.sop+.sop{margin-top:9px}
+.tl{list-style:none;margin-top:6px}
+.tl li{position:relative;padding:0 0 13px 17px;border-left:2px solid var(--line);font-size:12.5px}
+.tl li:last-child{border-left-color:transparent;padding-bottom:0}
+.tl li::before{content:"";position:absolute;left:-5px;top:4px;width:8px;height:8px;border-radius:50%;
+  background:var(--blue);box-shadow:0 0 0 2px var(--white)}
+.tl li.done::before{background:var(--lime)}
+.tl li.open::before{background:var(--purple)}
+.tl .t{color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums}
+.tl .x{font-size:11px;position:static;margin-left:6px}
+.row2{display:flex;gap:9px}
+.row2>*{flex:1;min-width:0}
+
+/* ===== 值班台 ===== */
+.duty{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--white);
+  border:1px solid var(--line);border-radius:14px;padding:12px 15px;margin-bottom:14px;box-shadow:var(--shadow)}
+.duty .k{font-size:12px;font-weight:680;white-space:nowrap}
+.duty select,.duty input{padding:6px 10px;font-size:12.5px}
+.duty .qs{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+.q{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:var(--cream);
+  border:1px solid var(--line);border-radius:999px;padding:5px 11px;transition:border-color .15s,transform .1s}
+.q:hover{border-color:var(--blue);transform:translateY(-1px)}
+.q b{font-weight:700;font-variant-numeric:tabular-nums}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:15px 16px;
+  cursor:pointer;box-shadow:var(--shadow);position:relative;overflow:hidden;
+  transition:transform .14s,box-shadow .18s,border-color .18s}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift)}
+.stat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.stat.ok::after{background:var(--ok)} .stat.warn::after{background:var(--warn)}
+.stat.bad::after{background:var(--bad)} .stat.todo::after{background:var(--doing)}
+.stat.ok:hover{border-color:var(--ok)} .stat.warn:hover{border-color:var(--warn)}
+.stat.bad:hover{border-color:var(--bad)} .stat.todo:hover{border-color:var(--doing)}
+.stat .n{font-size:30px;font-weight:720;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .l{font-size:12.5px;color:var(--dim);margin-top:3px}
+.stat .h{font-size:11px;color:var(--dim);margin-top:6px;opacity:.8}
+
+.blk{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:16px;
+  margin-bottom:14px;box-shadow:var(--shadow)}
+.bhead{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.bhead h3{font-size:14.5px;font-weight:680;letter-spacing:-.01em}
+.bhead .en{font-size:11px;color:var(--dim);font-weight:500;letter-spacing:.03em}
+.bhead .add{margin-left:auto}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:8px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* 今日重点 / 待办 —— 共用行样式 */
+.rowi{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2)}
+.rowi:last-child{border-bottom:none}
+.rowi.fin{opacity:.5}
+.rowi.fin .rt{text-decoration:line-through}
+.ck{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--line);background:var(--white);
+  cursor:pointer;flex:none;margin-top:2px;display:grid;place-items:center;font-size:11px;color:transparent;
+  transition:background .15s,border-color .15s}
+.ck:hover{border-color:var(--doing)}
+.ck.on{background:var(--ok);border-color:var(--ok);color:var(--ink)}
+.rb{flex:1;min-width:0}
+.rt{font-size:13.5px;font-weight:600;word-break:break-word}
+.rm{font-size:11.5px;color:var(--dim);display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+.pr{font-size:10px;font-weight:700;padding:1.5px 7px;border-radius:999px;color:var(--ink);flex:none}
+.pr.high{background:var(--bad)} .pr.mid{background:var(--warn)} .pr.low{background:var(--ok)}
+.ract{display:flex;gap:4px;flex:none;opacity:0;transition:opacity .15s}
+.rowi:hover .ract{opacity:1}
+.ract button{background:none;border:none;cursor:pointer;color:var(--dim);font-size:12px;padding:2px 4px;
+  border-radius:5px;transition:color .15s}
+.ract button:hover{color:var(--ink);background:var(--cream)}
+.mini{color:var(--dim);font-size:12.5px;text-align:center;padding:18px 0}
+
+/* 计划调整 */
+.pcard{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--cream);margin-bottom:9px}
+.pcard:last-child{margin-bottom:0}
+.pev{font-size:13px;font-weight:660;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.pev .ract{margin-left:auto}
+.pflow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12px}
+.pbox{background:var(--white);border:1px solid var(--line);border-radius:9px;padding:6px 10px;min-width:0}
+.pbox .pl{font-size:10px;color:var(--dim);margin-bottom:1px}
+.pbox .pv{font-weight:640;font-variant-numeric:tabular-nums}
+.parr{color:var(--dim);font-weight:700;flex:none}
+.prel{background:var(--warn-soft);border-color:#F0E2BE}
+.pto{background:var(--ok-soft);border-color:#DCEDBC}
+.pnote{font-size:11.5px;color:var(--dim);margin-top:8px}
+
+/* 时间轴 */
+.tline{list-style:none;padding-left:2px}
+.tline li{position:relative;padding:0 0 16px 20px;border-left:2px solid var(--line)}
+.tline li:last-child{border-left-color:transparent;padding-bottom:0}
+.tline li::before{content:"";position:absolute;left:-6px;top:3px;width:10px;height:10px;border-radius:50%;
+  background:var(--doing);box-shadow:0 0 0 2.5px var(--white)}
+.tline li.ok::before{background:var(--ok)} .tline li.warn::before{background:var(--warn)}
+.tline li.bad::before{background:var(--bad)}
+.tline .tt{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--dim)}
+.tline .tx{font-size:13.5px;font-weight:600;margin-top:1px}
+.tline .tn{font-size:11.5px;color:var(--dim);margin-top:2px}
+.tline li .ract{position:absolute;right:0;top:0}
+
+/* 最近更新 */
+.feed{list-style:none}
+.feed li{display:flex;gap:9px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line2);font-size:12.5px}
+.feed li:last-child{border-bottom:none}
+.feed .ft{color:var(--dim);font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.feed .fk{font-size:10px;padding:1px 6px;border-radius:999px;background:var(--cream);
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap;flex:none}
+
+/* 产品状态 */
+.pstat{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2)}
+.pstat:last-child{border-bottom:none}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+.sev{font-size:10px;font-weight:700;padding:1.5px 7px;border-radius:999px;color:var(--ink);flex:none}
+.sev.p0{background:var(--bad)} .sev.p1{background:var(--warn)} .sev.p2{background:var(--ok)}
+.st.closed{background:var(--cream);border:1px solid var(--line);color:var(--dim)}
+.icard.closed{border-left:3px solid var(--line);opacity:.55}
+
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}}
+
+/* 事故类型管理 */
+.tlist{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.trow{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--cream)}
+.trow summary{cursor:pointer;font-size:13px;font-weight:640;display:flex;align-items:center;gap:8px;
+  list-style:none}
+.trow summary::-webkit-details-marker{display:none}
+.trow summary .cnt{margin-left:auto;font-size:11px;color:var(--dim);font-weight:500}
+.trow[open] summary{margin-bottom:9px}
+.banner{margin:16px 0 18px;padding:11px 14px;border:1px solid var(--line);
+  background:var(--white);border-radius:12px;color:var(--dim);font-size:12.5px;box-shadow:var(--shadow)}
+.banner b{color:var(--ink);font-weight:640}
+.banner.info{border-left:3px solid var(--blue)}
+.banner.warn{border-left:3px solid var(--purple);background:var(--purple-soft);border-color:#EFD9FB}
+.banner.warn b{color:var(--ink)}
+.banner.warn ul{margin:5px 0 0 18px}
+.banner.warn li{margin:2px 0}
+
+/* 日期区间选择 */
+.daterow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:var(--white);
+  border:1px solid var(--line);border-radius:12px;padding:10px 13px;margin-bottom:12px;box-shadow:var(--shadow)}
+.daterow .dlab{font-size:12.5px;font-weight:680;white-space:nowrap}
+.daterow input[type=date]{font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);
+  background:var(--cream);border:1px solid var(--line);border-radius:8px;padding:6px 9px;
+  font-variant-numeric:tabular-nums;outline:none;transition:border-color .15s,box-shadow .15s}
+.daterow input[type=date]:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.daterow .dsep{color:var(--dim);font-weight:700}
+.daterow .quick{display:flex;gap:5px;flex-wrap:wrap}
+.daterow .quick button{font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;
+  background:var(--cream);color:var(--dim);border:1px solid var(--line);border-radius:999px;
+  padding:4px 11px;transition:.14s}
+.daterow .quick button:hover{border-color:var(--blue);color:var(--ink)}
+.daterow .quick button.on{background:var(--blue);color:var(--ink);border-color:var(--blue)}
+.daterow .dinfo{margin-left:auto;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+input[type=search],select,input[type=text],textarea{
+  font:inherit;color:var(--ink);background:var(--white);border:1px solid var(--line);
+  border-radius:10px;padding:8px 11px;outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+input[type=search]{flex:1;min-width:210px}
+select{cursor:pointer}
+.btn{font:inherit;cursor:pointer;background:var(--white);color:var(--ink);border:1px solid var(--line);
+  border-radius:10px;padding:8px 13px;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--blue);background:var(--blue-soft)}
+/* 主按钮：亮蓝底 + 深墨字。亮蓝上放白字对比度不够，会糊。 */
+.btn.primary{background:var(--blue);color:var(--ink);border-color:var(--blue);font-weight:640}
+.btn.primary:hover{background:#7E9CF3;border-color:#7E9CF3}
+.count{color:var(--dim);font-size:12.5px;margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:16px;
+  box-shadow:var(--shadow);cursor:pointer;position:relative;
+  transition:box-shadow .18s,transform .14s,border-color .18s}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift);border-color:var(--blue)}
+.card:active{transform:translateY(0)}
+.card.edited{border-color:var(--blue);background:linear-gradient(var(--blue-soft),var(--white) 64px)}
+.chead{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.app{font-weight:670;font-size:15.5px;letter-spacing:-.01em}
+.tag{font-size:11px;padding:2.5px 8px;border-radius:999px;background:var(--cream);
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+/* 渠道：不上色，靠品牌 logo 认。上色会和占比药丸的配色撞在一起，反而看不清谁是谁。 */
+.ch{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:640;
+  padding:2.5px 9px 2.5px 7px;border-radius:999px;background:var(--cream);
+  border:1px solid var(--line);color:var(--ink);white-space:nowrap;letter-spacing:.01em}
+.ch svg{width:12px;height:12px;flex:none;fill:currentColor}
+.owner{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+/* 没有真实头像时，用三个亮色轮着做底 */
+.av{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:12px;font-weight:680;letter-spacing:-.02em;overflow:hidden;
+  color:var(--ink);background:var(--blue)}
+.av.c1{background:var(--blue)} .av.c2{background:var(--lime)} .av.c3{background:var(--purple)}
+.av.photo{background:none}
+.av img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;
+  box-shadow:inset 0 0 0 1px rgba(44,42,61,.1)}
+.oname{font-weight:640;font-size:14.5px}
+.ocode{color:var(--dim);font-size:12px;font-weight:500}
+/* 占比：没有红色可用了，改成亮色药丸 + emoji 传递语义 */
+.share{margin-left:auto;font-size:12px;font-weight:680;font-variant-numeric:tabular-nums;
+  padding:3px 9px;border-radius:999px;color:var(--ink);white-space:nowrap}
+.share.hi{background:var(--lime)} .share.mid{background:var(--blue)} .share.lo{background:var(--purple)}
+.meta{display:flex;gap:16px;font-size:12px;color:var(--dim);border-top:1px solid var(--line2);padding-top:11px}
+.meta b{color:var(--ink);font-weight:640;font-variant-numeric:tabular-nums}
+.note{margin-top:10px;font-size:12px;color:var(--dim);background:var(--cream);border-radius:9px;
+  padding:8px 10px;white-space:pre-wrap;word-break:break-word}
+
+.empty{text-align:center;padding:70px 20px;color:var(--dim)}
+.empty .big{font-size:30px;display:block;margin-bottom:8px}
+
+.mask{position:fixed;inset:0;background:rgba(44,42,61,.4);display:none;align-items:center;
+  justify-content:center;padding:20px;z-index:50;backdrop-filter:blur(3px)}
+.mask.on{display:flex;animation:fade .16s ease-out}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:var(--white);border:1px solid var(--line);border-radius:18px;width:100%;max-width:580px;
+  max-height:88vh;overflow:auto;padding:22px;box-shadow:0 24px 60px rgba(44,42,61,.28);
+  animation:pop .18s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{transform:translateY(8px) scale(.985);opacity:0}to{transform:none;opacity:1}}
+.mhead{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.mhead h2{font-size:18px;font-weight:680;letter-spacing:-.01em}
+.x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:24px;cursor:pointer;
+  line-height:1;padding:0 4px;border-radius:6px;transition:color .15s}
+.x:hover{color:var(--ink)}
+.msub{color:var(--dim);font-size:12.5px;margin-bottom:16px;font-variant-numeric:tabular-nums}
+label{display:block;font-size:12px;font-weight:640;color:var(--dim);margin:16px 0 6px}
+.modal select,.modal textarea,.modal input[type=text]{width:100%}
+textarea{resize:vertical;min-height:64px;font-family:inherit;line-height:1.5}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+th{text-align:left;font-weight:640;color:var(--dim);font-size:10.5px;padding:7px 8px;
+  border-bottom:1px solid var(--line);letter-spacing:.04em;text-transform:uppercase}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:var(--cream)}
+td{padding:7px 8px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.pill{font-size:10px;padding:1.5px 7px;border-radius:999px;background:var(--blue);
+  color:var(--ink);font-weight:650;margin-left:5px}
+.pill.gray{background:var(--cream);border:1px solid var(--line);color:var(--dim)}
+.who{display:flex;align-items:center;gap:8px}
+.av.sm{width:26px;height:26px;font-size:10px}
+.bar-bg{height:5px;background:var(--cream);border-radius:3px;overflow:hidden;margin-top:4px;
+  box-shadow:inset 0 0 0 1px var(--line2)}
+.bar-fg{height:100%;background:var(--blue);border-radius:3px}
+.acts{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.acts .btn{flex:1}
+.acts .btn.del{flex:0 0 auto}
+.acts .btn.del:hover{background:var(--purple-soft);border-color:var(--purple)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--ink);color:var(--cream);padding:10px 18px;border-radius:999px;font-size:13px;
+  opacity:0;transition:.22s;z-index:99;pointer-events:none;box-shadow:0 6px 20px rgba(44,42,61,.3)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:640px){.wrap{padding:18px 12px 40px}.grid{grid-template-columns:1fr}.count{width:100%;margin:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <button class="themebtn" id="theme" title="切换日间 / 夜间模式" aria-label="切换日夜模式"></button>
+    <h1>🎯 投放协同中心</h1>
+    <div class="sub" id="sub"></div>
+  </header>
+
+  <!-- 待处理事故：不管在哪个 tab 都常驻。出事的时候不该还要点一下才看得见。 -->
+  <div id="strip" class="strip" style="display:none"></div>
+
+  <nav class="tabs">
+    <button class="tab on" data-v="owner">👥 负责人</button>
+    <button class="tab" data-v="duty">🏠 值班台</button>
+    <button class="tab" data-v="incident">🚨 异常事件<span class="badge" id="tabBadge" style="display:none"></span></button>
+  </nav>
+
+  <section id="vDuty" hidden>
+    <!-- 模块七：今天值班 + 快速入口 -->
+    <div class="duty">
+      <span class="k">📅 今天值班</span>
+      <select id="dutyWho"></select>
+      <input type="text" id="dutyNote" placeholder="值班备注（交接事项…）" style="flex:1;min-width:160px">
+      <span class="qs" id="quick"></span>
+    </div>
+
+    <!-- 模块一：四个统计卡片 -->
+    <div class="stats" id="stats"></div>
+
+    <div class="cols">
+      <!-- 模块二：今日重点 -->
+      <div class="blk">
+        <div class="bhead"><h3>📌 今日重点</h3><span class="en">Today's Focus</span>
+          <button class="btn sm primary add" id="addFocus">＋ 新增</button></div>
+        <div id="focus"></div>
+      </div>
+      <!-- 模块五：待办事项 -->
+      <div class="blk">
+        <div class="bhead"><h3>✅ 待办事项</h3><span class="en">To-do</span>
+          <button class="btn sm primary add" id="addTodo">＋ 新增</button></div>
+        <div id="todos"></div>
+      </div>
+    </div>
+
+    <!-- 模块四：今日计划调整 -->
+    <div class="blk">
+      <div class="bhead"><h3>🔀 今日计划调整</h3><span class="en">Plan Adjustment</span>
+        <button class="btn sm primary add" id="addPlan">＋ 新增</button></div>
+      <div id="plans"></div>
+    </div>
+
+    <div class="cols">
+      <!-- 模块六：时间轴 -->
+      <div class="blk">
+        <div class="bhead"><h3>🕐 时间轴</h3><span class="en">Timeline</span>
+          <button class="btn sm primary add" id="addTl">＋ 新增</button></div>
+        <ul class="tline" id="tline"></ul>
+      </div>
+      <!-- 模块七：最近更新 -->
+      <div class="blk">
+        <div class="bhead"><h3>🔔 最近更新</h3><span class="en">Recent</span></div>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="vOwner">
+    <div class="banner info">
+      <b>负责人：仅人员管理与查询。</b>初始数据由投放看板真实消耗自动生成（主负责人＝该 App×渠道消耗占比最高的投手）。
+      你的修改<b>只存在本机浏览器</b>，别人打开看不到 —— 要多人协同请导出 JSON 或改做全栈版本。
+    </div>
+    <div class="banner warn" id="warn" style="display:none"></div>
+
+    <!-- 日期区间选择：数据来自内嵌的逐日明细，任意区间前端现算 -->
+    <div class="daterow">
+      <span class="dlab">📅 日期区间</span>
+      <input type="date" id="dStart"><span class="dsep">→</span><input type="date" id="dEnd">
+      <span class="quick" id="quickRanges"></span>
+      <span class="dinfo" id="dInfo"></span>
+    </div>
+
+    <div class="bar">
+      <input type="search" id="q" placeholder="🔍  搜索 App、投手姓名或代号…">
+      <select id="fApp"><option value="">全部 App</option></select>
+      <select id="fPlat"><option value="">全部平台</option></select>
+      <select id="fCh"><option value="">全部渠道</option></select>
+      <select id="fOwner"><option value="">全部负责人</option></select>
+      <button class="btn" id="export">⬇️ 导出</button>
+      <button class="btn" id="reset">↺ 重置</button>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none"><span class="big">🔍</span>没有匹配的结果</div>
+  </section>
+
+  <section id="vIncident" hidden>
+    <div class="banner info">
+      <b>第二阶段：全部事故人工创建，不接自动监控。</b>重点是把应急流程沉淀成标准动作 —— 先在「事故类型」里把影响范围、负责人、处理流程、恢复条件定好，出事时按类型开单，流程自动带出来。
+      第三阶段再接自动告警和 AI 分析。<b>事故数据同样只存在本机浏览器</b>，要给别人看必须导出 JSON。
+    </div>
+
+    <div class="bar">
+      <input type="search" id="iq" placeholder="🔍  搜索标题、类型、负责人、影响范围…">
+      <select id="fStatus">
+        <option value="">全部状态</option>
+        <option value="open">待处理</option>
+        <option value="doing">处理中</option>
+        <option value="done">已恢复</option>
+        <option value="closed">已关闭</option>
+      </select>
+      <select id="fType"><option value="">全部类型</option></select>
+      <select id="fSev"><option value="">全部严重度</option>
+        <option value="p0">P0 高</option><option value="p1">P1 中</option><option value="p2">P2 低</option></select>
+      <select id="fIApp"><option value="">全部 App</option></select>
+      <select id="fSort">
+        <option value="smart">默认排序（状态+时间）</option>
+        <option value="new">最新创建</option>
+        <option value="old">最早创建</option>
+        <option value="sev">严重程度</option>
+      </select>
+      <button class="btn primary" id="newInc">＋ 新建事故</button>
+      <button class="btn" id="mgType">⚙️ 事故类型</button>
+      <button class="btn" id="expInc">⬇️ 导出</button>
+      <button class="btn" id="impInc">⬆️ 导入</button>
+      <span class="count" id="icount"></span>
+    </div>
+
+    <div class="ilist" id="ilist"></div>
+    <div class="empty" id="iempty" style="display:none"><span class="big">🌤️</span>暂无事故记录</div>
+  </section>
+</div>
+<input type="file" id="impFile" accept="application/json" hidden>
+
+<div class="mask" id="mask">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// 数据源改造：原先由 generate.py 把 SEED 内联烤进 HTML（静态快照）。
+// 并入本仓库后改为运行时 fetch('/api/mia')，直接读 PG 库（daily_snapshots/records/xmp_cache），
+// 打开即实时最新。前端逻辑一行未改，仅从「内联数据」变为「拉取后启动」。
+let SEED = null;
+function bootMia() {
+  const host = document.body;
+  fetch('/api/mia', { cache: 'no-store' })
+    .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then((data) => {
+      if (data && data.error) throw new Error(data.error);
+      SEED = data;
+      startMiaApp();
+    })
+    .catch((e) => {
+      const b = document.createElement('div');
+      b.style.cssText = 'position:sticky;top:0;z-index:999;background:#F48CA7;color:#2C2A3D;'
+        + 'padding:11px 16px;font:600 13px/1.5 system-ui,sans-serif;text-align:center';
+      b.textContent = '⚠️ 数据加载失败：' + e.message + '（接口 /api/mia 暂不可用，请稍后刷新）';
+      host.insertBefore(b, host.firstChild);
+    });
+}
+</script>
+<script>
+function startMiaApp() {
+const KEY='ug-owner-center-v1';
+const TKEY='ug-incident-types-v1';   // 事故类型（SOP 模板）
+const IKEY='ug-incidents-v1';        // 事故记录
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const money=n=>'$'+Math.round(n).toLocaleString();
+const initials=s=>s?s.slice(-2):'?';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const now=()=>new Date().toLocaleString('zh-CN',{hour12:false});
+
+const CHN={FB:'Facebook',GG:'Google',TT:'TikTok'};
+const ST={open:'待处理',doing:'处理中',done:'已恢复',closed:'已关闭'};
+const SEV={p0:'P0 高',p1:'P1 中',p2:'P2 低'};
+const PS={ok:'正常',warn:'关注',bad:'异常'};
+const PRIO={high:'高',mid:'中',low:'低'};
+// 值班台各模块的 localStorage key
+const DKEY='ug-duty-v1', PKEY='ug-prodstatus-v1', FKEY='ug-focus-v1',
+      TDKEY='ug-todos-v1', PLKEY='ug-plans-v1', TLKEY='ug-timeline-v1';
+
+// 默认事故类型 = SOP 模板。开事故单时，这里的影响范围/负责人/流程/恢复条件会自动带进去。
+// ⚠️ 下面的流程和恢复条件是我按常识写的草稿，不是你们真实的应急规程，
+//    负责人一律留空（我不知道谁负责，不编）。请在「⚙️ 事故类型」里逐条改成真的。
+const DEFAULT_TYPES=[
+ {id:'pay',emoji:'💳',name:'支付异常',scope:'三方支付（waffo / onerway）或 IAP 掉单、支付成功率下跌，直接影响收入',owner:'',
+  steps:['确认影响面：哪个产品、哪个支付通道、iOS 还是安卓','拉支付成功率曲线，和昨天同时段对比，确认是真跌还是波动','找出是通道侧故障还是我方配置变更（近期有没有发版/改配置）','通道故障 → 联系支付服务商；我方问题 → 回滚变更','评估掉单金额，同步财务'],
+  recover:'支付成功率恢复到近 7 日正常区间，且连续观察 30 分钟无回落',note:'（草稿，待确认）'},
+ {id:'data',emoji:'📊',name:'数据异常',scope:'看板 / AF / Adjust 回传缺失或异常，导致数字不可信、日报出错',owner:'',
+  steps:['确认是「取数失败」还是「数据本身不对」','对比两个口径：投放看板 postback 聚合 vs XMP 媒体侧消耗','若某天 XMP 返回 cached:false，说明后台没预热该日，接口不会现算，需找看板负责人补','注意归因数据会回溯，越靠近今天的 1-2 天越不可信，先排除这个因素','确认影响了哪些报表，通知使用方先别用'],
+  recover:'两个口径对得上（偏差 <2%），且受影响报表已重跑',note:'（草稿，待确认）'},
+ {id:'ua',emoji:'📈',name:'投放异常',scope:'消耗突增突降、账户封禁、余额不足、素材大面积拒审',owner:'',
+  steps:['确认是单账户还是整个渠道','消耗异常 → 查是否账户被封 / 余额不足 / 出价或预算被改','素材拒审 → 拉拒审原因，判断是否政策变化','封禁 → 走渠道申诉，同时把预算切到备用账户','评估损失消耗，同步投放负责人'],
+  recover:'账户恢复正常投放，消耗回到计划区间',note:'（草稿，待确认）'},
+ {id:'prod',emoji:'🐛',name:'产品异常',scope:'App 崩溃、核心功能不可用、注册/登录失败，影响用户和转化',owner:'',
+  steps:['确认影响范围：哪个产品、哪个版本、哪些机型/地区','查最近有没有发版或后端变更','严重且与发版相关 → 立即回滚','评估是否需要暂停投放止损（投放到坏包 = 烧钱）','修复后验证核心链路'],
+  recover:'核心链路验证通过，崩溃率/成功率回到发版前水平',note:'（草稿，待确认）'},
+];
+
+// 渠道品牌 logo：内联 SVG（跟头像一样不能引外链，否则离线打开就裂）。
+// 统一 fill:currentColor 走深墨单色 —— 用品牌原色会重新把颜色引回来，就又和占比撞了。
+const LOGO={
+  FB:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.07C24 5.44 18.63.07 12 .07S0 5.44 0 12.07c0 5.99 4.39 10.95 10.13 11.85v-8.38H7.08v-3.47h3.05V9.43c0-3.01 1.79-4.67 4.53-4.67 1.31 0 2.69.24 2.69.24v2.95h-1.51c-1.49 0-1.96.93-1.96 1.87v2.25h3.33l-.53 3.47h-2.8v8.38C19.61 23.02 24 18.06 24 12.07z"/></svg>',
+  GG:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.24 10.29v4.11h6.81c-.28 1.77-2.06 5.17-6.81 5.17-4.09 0-7.44-3.39-7.44-7.57s3.35-7.57 7.44-7.57c2.33 0 3.89.99 4.79 1.85l3.25-3.14C18.19 1.19 15.48 0 12.24 0c-6.64 0-12 5.37-12 12s5.36 12 12 12c6.93 0 11.52-4.87 11.52-11.73 0-.79-.09-1.39-.19-1.99h-11.33z"/></svg>',
+  TT:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>'};
+function chip(r){
+  return `<span class="ch" title="${esc(r.channelName)}">${LOGO[r.channel]||''}${esc(r.channelName)}</span>`;
+}
+
+// 色板只有三个亮色，所以"每人一个专属色"做不到了（12 人 3 色必撞）。
+// 好在 12 人里 11 人有真实头像，只有没头像的才退回首字，用三色轮着来。
+const CIDX={};
+(SEED.roster||[]).forEach((p,i)=>{CIDX[p.code]='c'+(i%3+1)});
+function avatar(code,name,cls){
+  const src=(SEED.avatars||{})[code];
+  const inner=src?`<img src="${esc(src)}" alt="${esc(name)}" loading="lazy">`:esc(initials(name));
+  const tone=src?'photo':(CIDX[code]||'c1');
+  return `<span class="av ${tone} ${cls||''}" title="${esc(name)}">${inner}</span>`;
+}
+
+function key(r){return `${r.app}|${r.platform}|${r.channel}`}
+
+// 浏览器以 file:// 打开时个别环境会禁 localStorage；探测一次，失败就降级为仅内存。
+let canStore=(()=>{try{localStorage.setItem('__p','1');localStorage.removeItem('__p');return true}catch(e){return false}})();
+
+function readOverrides(){
+  if(!canStore)return {};
+  try{return JSON.parse(localStorage.getItem(KEY)||'{}')}
+  catch(e){console.warn('读取本地修改失败，已忽略：',e);return {}}
+}
+
+function load(){
+  const base=JSON.parse(JSON.stringify(SEED));
+  base.rows=aggregateRange(curStart,curEnd);      // 按当前选中区间现算
+  const ov=readOverrides();
+  base.rows.forEach(r=>{
+    const o=ov[key(r)];
+    if(!o)return;
+    Object.assign(r,o);
+    r._edited=true;
+    const p=r.people.find(x=>x.code===r.owner);   // 占比永远以看板数据为准，不吃存档里的旧值
+    r.ownerShare=p?p.share:0;
+    r.ownerName=(SEED.roster.find(x=>x.code===r.owner)||{}).name||r.owner;
+  });
+  return base;
+}
+
+function saveOne(r){
+  if(!canStore){toast('浏览器禁用了本地存储，本次修改刷新后会丢失，请先导出 JSON');return}
+  const ov=readOverrides();
+  ov[key(r)]={owner:r.owner,note:r.note,updatedAt:r.updatedAt,updatedBy:r.updatedBy};
+  try{localStorage.setItem(KEY,JSON.stringify(ov))}
+  catch(e){console.warn('保存失败：',e);toast('保存失败，请导出 JSON 留存')}
+}
+
+/* ============================================================
+   日期区间聚合（前端）—— 与后端 generate.py 的 aggregate() 同口径：
+   噪音门槛 spend<minSpend 不展示、占比<minShare 的投手不进详情、主负责人只从真人里选。
+   数据源是 SEED.daily 的【逐日明细】，所以任意区间都能现算。
+   ============================================================ */
+function aggregateRange(startISO,endISO){
+  const D=SEED.daily;
+  if(!D) return SEED.rows.slice();               // 老数据没有 daily，退回默认聚合
+  const inRange=D.days.map(d=>d>=startISO&&d<=endISO);
+  const nDays=inRange.filter(Boolean).length||1;
+  const realCodes=new Set(SEED.roster.map(p=>p.code));
+  const acc=new Map();                            // key: prod|chan -> Map(op -> {cost,rev,reg})
+  for(const [di,pi,ci,oi,cost,rev,reg] of D.rows){
+    if(!inRange[di]) continue;
+    const k=pi+'|'+ci;
+    let m=acc.get(k); if(!m){m=new Map();acc.set(k,m)}
+    let a=m.get(oi); if(!a){a={cost:0,rev:0,reg:0};m.set(oi,a)}
+    a.cost+=cost; a.rev+=rev; a.reg+=reg;
+  }
+  const minSpend=SEED.minSpend??50, minShare=SEED.minShare??0.005;
+  const out=[];
+  for(const [k,m] of acc){
+    const [pi,ci]=k.split('|').map(Number);
+    const app=D.prods[pi], chan=D.chans[ci];
+    const lst=[...m.entries()].map(([oi,a])=>({code:D.ops[oi],...a})).sort((x,y)=>y.cost-x.cost);
+    const tot=lst.reduce((s,x)=>s+x.cost,0);
+    if(tot<minSpend) continue;
+    const people=lst.filter(x=>x.cost/tot>=minShare).map(x=>({
+      code:x.code,name:(SEED.roster.find(p=>p.code===x.code)||{}).name||x.code,
+      spend:+x.cost.toFixed(2),share:+(x.cost/tot).toFixed(4),reg:x.reg,rev:+x.rev.toFixed(2),
+      real:realCodes.has(x.code)}));
+    if(!people.length) continue;
+    const owner=people.find(p=>p.real)||people[0];
+    out.push({app,platform:(SEED.plat||{})[app]||'?',channel:chan,
+      channelName:(SEED.chn||{})[chan]||chan,
+      spend7d:+tot.toFixed(2),dailyAvg:+(tot/nDays).toFixed(2),
+      rev7d:+lst.reduce((s,x)=>s+x.rev,0).toFixed(2),
+      owner:owner.code,ownerName:owner.name,ownerShare:owner.share,
+      people,note:'',updatedAt:'',updatedBy:''});
+  }
+  out.sort((a,b)=>b.spend7d-a.spend7d);
+  return out;
+}
+
+// 当前选中的日期区间（默认=后端给的 defaultWindow 天）
+let curStart,curEnd;
+function initRange(){
+  const D=SEED.daily;
+  if(!D||!D.days.length){const w=(SEED.window||'').split('~');curStart=(w[0]||'').trim();curEnd=(w[1]||'').trim();return}
+  const n=Math.min(SEED.defaultWindow||7,D.days.length);
+  curEnd=D.days[D.days.length-1]; curStart=D.days[D.days.length-n];
+}
+initRange();
+
+let data=load();
+
+// ---------- 事故中心 ----------
+function jread(k,def){
+  if(!canStore) return def;
+  try{const v=localStorage.getItem(k); return v?JSON.parse(v):def}
+  catch(e){console.warn('读取',k,'失败：',e); return def}
+}
+function jwrite(k,v){
+  if(!canStore){toast('浏览器禁用了本地存储，改动刷新后会丢，请先导出');return false}
+  try{localStorage.setItem(k,JSON.stringify(v));return true}
+  catch(e){console.warn('写入',k,'失败：',e);toast('保存失败，请导出留存');return false}
+}
+let types=jread(TKEY,null)||JSON.parse(JSON.stringify(DEFAULT_TYPES));
+let incidents=jread(IKEY,[]);
+const saveTypes=()=>jwrite(TKEY,types);
+const saveIncidents=()=>jwrite(IKEY,incidents);
+const typeOf=id=>types.find(t=>t.id===id)||{emoji:'❓',name:'（类型已删除）',scope:'',steps:[],recover:'',owner:''};
+const pending=()=>incidents.filter(i=>i.status!=='done'&&i.status!=='closed');
+
+function renderStrip(){
+  const p=pending();
+  const s=$('#strip'), b=$('#tabBadge');
+  b.style.display=p.length?'inline-block':'none'; b.textContent=p.length;
+  if(!p.length){s.style.display='none';return}
+  s.style.display='flex';
+  s.innerHTML=`<span class="lab">🚨 待处理事故 ${p.length}</span>`+
+    p.slice(0,6).map(i=>{const t=typeOf(i.typeId);
+      return `<span class="ic" data-id="${i.id}">${t.emoji} <b>${esc(i.title)}</b>
+        <span class="st ${i.status}" style="padding:1px 7px;font-size:10px">${ST[i.status]}</span></span>`}).join('')
+    +(p.length>6?`<span class="lab" style="color:var(--dim);font-weight:500">还有 ${p.length-6} 条…</span>`:'');
+  s.querySelectorAll('.ic').forEach(el=>el.onclick=()=>{switchTab('incident');openInc(el.dataset.id)});
+}
+
+function imatch(i){
+  const q=$('#iq').value.trim().toLowerCase();
+  if($('#fStatus').value&&i.status!==$('#fStatus').value)return false;
+  if($('#fType').value&&i.typeId!==$('#fType').value)return false;
+  if($('#fSev').value&&(i.sev||'p1')!==$('#fSev').value)return false;
+  if($('#fIApp').value&&i.app!==$('#fIApp').value)return false;
+  if(!q)return true;
+  const t=typeOf(i.typeId);
+  return [i.title,i.owner,i.scope,i.note,i.app,(i.channels||[]).join(' '),t.name,
+    ...(i.log||[]).map(l=>l.text)].join(' ').toLowerCase().includes(q);
+}
+
+function renderInc(){
+  const rank={open:0,doing:1,done:2,closed:3}, srank={p0:0,p1:1,p2:2};
+  const sort=$('#fSort').value;
+  const cmp={
+    smart:(a,b)=>rank[a.status]-rank[b.status]||srank[a.sev||'p1']-srank[b.sev||'p1']
+                 ||(b.createdAt||'').localeCompare(a.createdAt||''),
+    new:(a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''),
+    old:(a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''),
+    sev:(a,b)=>srank[a.sev||'p1']-srank[b.sev||'p1']||rank[a.status]-rank[b.status],
+  }[sort]||((a,b)=>0);
+  const list=incidents.filter(imatch).sort(cmp);
+  $('#ilist').innerHTML=list.map(i=>{
+    const t=typeOf(i.typeId);
+    return `<div class="icard ${i.status}" data-id="${i.id}">
+      <span class="iemoji">${t.emoji}</span>
+      <span class="ibody">
+        <div class="ititle">${esc(i.title)}</div>
+        <div class="imeta">
+          <span>${esc(t.name)}</span>
+          ${i.app?`<span>📱 ${esc(i.app)}</span>`:''}
+          ${(i.channels||[]).length?`<span>📡 ${i.channels.map(c=>esc(CHN[c]||c)).join('/')}</span>`:''}
+          <span>👤 ${esc(i.owner||'未指派')}</span>
+          <span>🕐 ${esc(i.createdAt||'')}</span>
+          ${i.log&&i.log.length?`<span>📝 ${i.log.length} 条记录</span>`:''}
+        </div>
+      </span>
+      <span class="sev ${i.sev||'p1'}">${SEV[i.sev||'p1']}</span>
+      <span class="st ${i.status}">${ST[i.status]}</span>
+    </div>`}).join('');
+  $('#iempty').style.display=list.length?'none':'block';
+  $('#iempty').innerHTML=incidents.length
+    ? '<span class="big">🔍</span>没有匹配的事故'
+    : '<span class="big">🌤️</span>暂无事故记录，一切正常';
+  $('#icount').textContent=`${list.length} / ${incidents.length} 条 · 待处理 ${pending().length}`;
+  $$('#ilist .icard').forEach(el=>el.onclick=()=>openInc(el.dataset.id));
+  renderStrip();
+  if(typeof renderStats==='function')renderStats();
+}
+
+function fillTypeFilter(){
+  const s=$('#fType'), cur=s.value;
+  s.innerHTML='<option value="">全部类型</option>'+
+    types.map(t=>`<option value="${esc(t.id)}">${t.emoji} ${esc(t.name)}</option>`).join('');
+  s.value=cur;
+}
+
+function switchTab(v){
+  $$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  $('#vDuty').hidden=v!=='duty';
+  $('#vOwner').hidden=v!=='owner';
+  $('#vIncident').hidden=v!=='incident';
+}
+$$('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.v));
+
+// ================= 值班台 =================
+let duty=jread(DKEY,{who:'',note:''});
+let prodStatus=jread(PKEY,{});
+let focus=jread(FKEY,[]);
+let todos=jread(TDKEY,[]);
+let plans=jread(PLKEY,[]);
+let timeline=jread(TLKEY,[]);
+
+// 产品清单直接来自看板真实数据（SEED.rows），不另维护一份，免得对不上
+const PRODUCTS=[...new Set(data.rows.map(r=>r.app))].sort();
+const pstat=a=>(prodStatus[a]&&prodStatus[a].status)||'ok';   // 默认正常，人工改
+const pnote=a=>(prodStatus[a]&&prodStatus[a].note)||'';
+const byStat=s=>PRODUCTS.filter(a=>pstat(a)===s);
+const openTodos=()=>todos.filter(t=>!t.done);
+
+function esc2(s){return esc(s)}
+const nameOpts=(v,ph='未指派')=>[`<option value="">${ph}</option>`]
+  .concat(data.roster.map(p=>`<option value="${esc(p.name)}" ${p.name===v?'selected':''}>${esc(p.name)}</option>`))
+  .concat(v&&!data.roster.some(p=>p.name===v)?`<option value="${esc(v)}" selected>${esc(v)}</option>`:[]).join('');
+const appOpts=v=>['<option value="">未指定</option>']
+  .concat(PRODUCTS.map(a=>`<option value="${esc(a)}" ${a===v?'selected':''}>${esc(a)}</option>`)).join('');
+
+function renderDuty(){
+  $('#dutyWho').innerHTML=nameOpts(duty.who,'（未指定值班人）');
+  $('#dutyNote').value=duty.note||'';
+  $('#quick').innerHTML=[
+    ['focus','📌 今日重点',focus.filter(f=>!f.done).length],
+    ['inc','🚨 异常事件',pending().length],
+    ['todo','✅ 待办',openTodos().length],
+    ['feed','🔔 最近更新',recent().length],
+  ].map(([k,l,n])=>`<span class="q" data-q="${k}">${l} <b>${n}</b></span>`).join('');
+  $$('#quick .q').forEach(el=>el.onclick=()=>{
+    const k=el.dataset.q;
+    if(k==='inc'){switchTab('incident');return}
+    switchTab('duty');
+    const id={focus:'#focus',todo:'#todos',feed:'#feed'}[k];
+    document.querySelector(id).closest('.blk').scrollIntoView({behavior:'smooth',block:'center'});
+  });
+}
+$('#dutyWho').onchange=e=>{duty.who=e.target.value;jwrite(DKEY,duty);renderDuty()};
+$('#dutyNote').oninput=e=>{duty.note=e.target.value;jwrite(DKEY,duty)};
+
+function renderStats(){
+  const S=[
+    ['ok','🟢','正常产品',byStat('ok').length,'点开可改状态'],
+    ['warn','🟡','关注产品',byStat('warn').length,'需要盯一下'],
+    ['bad','🔴','异常产品',byStat('bad').length,'有事故影响'],
+    ['todo','📌','待处理事项',pending().length+openTodos().length,`事故 ${pending().length} · 待办 ${openTodos().length}`],
+  ];
+  $('#stats').innerHTML=S.map(([k,e,l,n,h])=>
+    `<div class="stat ${k}" data-k="${k}"><div class="n">${n}</div>
+      <div class="l">${e} ${l}</div><div class="h">${h}</div></div>`).join('');
+  $$('#stats .stat').forEach(el=>el.onclick=()=>statList(el.dataset.k));
+}
+
+// 点卡片 → 看对应列表（产品状态可直接在这里改）
+function statList(k){
+  if(k==='todo'){
+    $('#modal').innerHTML=`
+      <div class="mhead"><h2>📌 待处理事项</h2><button class="x" id="close">&times;</button></div>
+      <div class="msub">未恢复的事故 ${pending().length} 条 · 未完成待办 ${openTodos().length} 条</div>
+      <label>异常事件</label>
+      ${pending().length?pending().map(i=>{const t=typeOf(i.typeId);
+        return `<div class="pstat"><span>${t.emoji}</span><span class="rb"><div class="rt">${esc(i.title)}</div>
+          <div class="rm"><span>${esc(i.app||'—')}</span><span>👤 ${esc(i.owner||'未指派')}</span></div></span>
+          <span class="st ${i.status}">${ST[i.status]}</span></div>`}).join(''):'<div class="mini">无</div>'}
+      <label>待办</label>
+      ${openTodos().length?openTodos().map(t=>`<div class="pstat"><span class="rb">
+        <div class="rt">${esc(t.text)}</div><div class="rm"><span>👤 ${esc(t.owner||'未指派')}</span>
+        ${t.due?`<span>⏰ ${esc(t.due)}</span>`:''}</div></span></div>`).join(''):'<div class="mini">无</div>'}
+      <div class="acts"><button class="btn" id="cancel">关闭</button></div>`;
+    show(); $('#close').onclick=hide; $('#cancel').onclick=hide; return;
+  }
+  const list=byStat(k);
+  $('#modal').innerHTML=`
+    <div class="mhead"><h2>${({ok:'🟢 正常产品',warn:'🟡 关注产品',bad:'🔴 异常产品'})[k]}</h2>
+      <button class="x" id="close">&times;</button></div>
+    <div class="msub">产品状态<b>由人工维护</b>（第三阶段不接自动监控）。下面可以直接改。</div>
+    ${PRODUCTS.map(a=>{
+      const inc=incidents.filter(i=>i.app===a&&i.status!=='done'&&i.status!=='closed').length;
+      return `<div class="pstat" ${pstat(a)!==k?'style="opacity:.42"':''}>
+        <span class="dot ${pstat(a)}"></span>
+        <span class="rb"><div class="rt">${esc(a)}</div>
+          <div class="rm">${inc?`<span>🚨 ${inc} 条未恢复事故</span>`:'<span>无未恢复事故</span>'}
+          ${pnote(a)?`<span>${esc(pnote(a))}</span>`:''}</div></span>
+        <select data-a="${esc(a)}" style="flex:0 0 auto;padding:4px 8px;font-size:12px">
+          ${Object.entries(PS).map(([v,l])=>`<option value="${v}" ${pstat(a)===v?'selected':''}>${l}</option>`).join('')}
+        </select>
+        <input type="text" data-note="${esc(a)}" value="${esc(pnote(a))}" placeholder="备注"
+          style="flex:0 0 130px;padding:4px 8px;font-size:12px">
+      </div>`}).join('')}
+    <div class="acts"><button class="btn primary" id="save">保存</button>
+      <button class="btn" id="cancel">取消</button></div>`;
+  show(); $('#close').onclick=hide; $('#cancel').onclick=hide;
+  $('#save').onclick=()=>{
+    $('#modal').querySelectorAll('[data-a]').forEach(s=>{
+      const a=s.dataset.a;
+      prodStatus[a]={status:s.value,note:($('#modal').querySelector(`[data-note="${CSS.escape(a)}"]`)||{}).value||''};
+    });
+    jwrite(PKEY,prodStatus); hide(); renderStats(); toast('产品状态已保存');
+  };
+}
+
+// ---------- 今日重点 ----------
+function renderFocus(){
+  const list=focus.slice().sort((a,b)=>(a.done?1:0)-(b.done?1:0)||
+    ({high:0,mid:1,low:2}[a.prio]??1)-({high:0,mid:1,low:2}[b.prio]??1));
+  $('#focus').innerHTML=list.length?list.map(f=>`
+    <div class="rowi ${f.done?'fin':''}" data-id="${f.id}">
+      <span class="ck ${f.done?'on':''}" data-ck="${f.id}">✓</span>
+      <span class="rb"><div class="rt">${f.app?`<b>${esc(f.app)}</b> · `:''}${esc(f.text)}</div>
+        <div class="rm"><span>👤 ${esc(f.owner||'未指派')}</span><span>${esc(f.createdAt||'')}</span></div></span>
+      <span class="pr ${f.prio||'mid'}">${PRIO[f.prio]||'中'}</span>
+      <span class="ract"><button data-ed="${f.id}" title="编辑">✎</button>
+        <button data-del="${f.id}" title="删除">🗑</button></span>
+    </div>`).join(''):'<div class="mini">今天还没定重点</div>';
+  wire('#focus',focus,FKEY,renderFocus,editFocus);
+}
+function wire(sel,arr,key,re,ed){
+  const root=$(sel);
+  root.querySelectorAll('[data-ck]').forEach(el=>el.onclick=()=>{
+    const it=arr.find(x=>x.id===el.dataset.ck); it.done=!it.done;
+    if(it.done)it.doneAt=now(); jwrite(key,arr); re(); renderAll();
+  });
+  root.querySelectorAll('[data-ed]').forEach(el=>el.onclick=e=>{e.stopPropagation();ed(el.dataset.ed)});
+  root.querySelectorAll('[data-del]').forEach(el=>el.onclick=e=>{
+    e.stopPropagation();
+    const it=arr.find(x=>x.id===el.dataset.del);
+    if(!confirm(`删除「${it.text||it.event}」？`))return;
+    const i=arr.findIndex(x=>x.id===el.dataset.del); arr.splice(i,1);
+    jwrite(key,arr); re(); renderAll(); toast('已删除');
+  });
+}
+function editFocus(id){
+  const f=id?focus.find(x=>x.id===id):{app:'',text:'',owner:'',prio:'mid'};
+  $('#modal').innerHTML=`
+    <div class="mhead"><h2>${id?'编辑':'＋ 新增'}今日重点</h2><button class="x" id="close">&times;</button></div>
+    <label>所属 App</label><select id="fA">${appOpts(f.app)}</select>
+    <label>重点内容</label><input type="text" id="fT" value="${esc(f.text||'')}" placeholder="例如：iOS 支付恢复观察">
+    <div class="row2">
+      <div><label>负责人</label><select id="fO">${nameOpts(f.owner)}</select></div>
+      <div><label>优先级</label><select id="fP">${Object.entries(PRIO).map(([v,l])=>
+        `<option value="${v}" ${(f.prio||'mid')===v?'selected':''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <div class="acts"><button class="btn primary" id="ok">保存</button>
+      <button class="btn" id="cancel">取消</button></div>`;
+  show(); $('#close').onclick=hide; $('#cancel').onclick=hide;
+  $('#ok').onclick=()=>{
+    const text=$('#fT').value.trim(); if(!text){toast('内容不能为空');return}
+    const o={app:$('#fA').value,text,owner:$('#fO').value,prio:$('#fP').value};
+    if(id)Object.assign(f,o); else focus.push({id:uid(),...o,done:false,createdAt:now()});
+    jwrite(FKEY,focus); hide(); renderFocus(); renderAll(); toast('已保存');
+  };
+}
+$('#addFocus').onclick=()=>editFocus(null);
+
+// ---------- 待办 ----------
+function renderTodos(){
+  const list=todos.slice().sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(a.due||'~').localeCompare(b.due||'~'));
+  $('#todos').innerHTML=list.length?list.map(t=>`
+    <div class="rowi ${t.done?'fin':''}">
+      <span class="ck ${t.done?'on':''}" data-ck="${t.id}">✓</span>
+      <span class="rb"><div class="rt">${esc(t.text)}</div>
+        <div class="rm"><span>👤 ${esc(t.owner||'未指派')}</span>${t.due?`<span>⏰ ${esc(t.due)}</span>`:''}
+          ${t.done&&t.doneAt?`<span>✅ ${esc(t.doneAt)}</span>`:''}</div></span>
+      <span class="ract"><button data-ed="${t.id}" title="编辑">✎</button>
+        <button data-del="${t.id}" title="删除">🗑</button></span>
+    </div>`).join(''):'<div class="mini">没有待办</div>';
+  wire('#todos',todos,TDKEY,renderTodos,editTodo);
+}
+function editTodo(id){
+  const t=id?todos.find(x=>x.id===id):{text:'',owner:'',due:''};
+  $('#modal').innerHTML=`
+    <div class="mhead"><h2>${id?'编辑':'＋ 新增'}待办</h2><button class="x" id="close">&times;</button></div>
+    <label>事项</label><input type="text" id="tT" value="${esc(t.text||'')}" placeholder="例如：检查 Romi 支付恢复">
+    <div class="row2">
+      <div><label>负责人</label><select id="tO">${nameOpts(t.owner)}</select></div>
+      <div><label>截止时间</label><input type="text" id="tD" value="${esc(t.due||'')}" placeholder="例如：16:00"></div>
+    </div>
+    <div class="acts"><button class="btn primary" id="ok">保存</button>
+      <button class="btn" id="cancel">取消</button></div>`;
+  show(); $('#close').onclick=hide; $('#cancel').onclick=hide;
+  $('#ok').onclick=()=>{
+    const text=$('#tT').value.trim(); if(!text){toast('事项不能为空');return}
+    const o={text,owner:$('#tO').value,due:$('#tD').value.trim()};
+    if(id)Object.assign(t,o); else todos.push({id:uid(),...o,done:false,createdAt:now()});
+    jwrite(TDKEY,todos); hide(); renderTodos(); renderAll(); toast('已保存');
+  };
+}
+$('#addTodo').onclick=()=>editTodo(null);
+
+// ---------- 计划调整 ----------
+function renderPlans(){
+  $('#plans').innerHTML=plans.length?plans.map(p=>`
+    <div class="pcard">
+      <div class="pev">🔀 ${esc(p.event)}
+        <span class="ract"><button data-ed="${p.id}" title="编辑">✎</button>
+          <button data-del="${p.id}" title="删除">🗑</button></span></div>
+      <div class="pflow">
+        <span class="pbox"><div class="pl">调整前</div><div class="pv">${esc(p.before||'—')}</div></span>
+        <span class="parr">→</span>
+        <span class="pbox"><div class="pl">调整后</div><div class="pv">${esc(p.after||'—')}</div></span>
+        ${p.released?`<span class="pbox prel"><div class="pl">释放预算</div><div class="pv">${esc(p.released)}</div></span>
+          <span class="parr">→</span>
+          <span class="pbox pto"><div class="pl">预算去向</div><div class="pv">${esc(p.target||'未分配')}</div></span>`:''}
+      </div>
+      ${p.note?`<div class="pnote">${esc(p.note)}</div>`:''}
+    </div>`).join(''):'<div class="mini">今天没有计划调整</div>';
+  wire('#plans',plans,PLKEY,renderPlans,editPlan);
+}
+function editPlan(id){
+  const p=id?plans.find(x=>x.id===id):{event:'',before:'',after:'',released:'',target:'',note:''};
+  $('#modal').innerHTML=`
+    <div class="mhead"><h2>${id?'编辑':'＋ 新增'}计划调整</h2><button class="x" id="close">&times;</button></div>
+    <div class="msub">全部手工填写。以后接 AI 时，这里就是它给建议的落点。</div>
+    <label>触发事件</label><input type="text" id="pE" value="${esc(p.event||'')}" placeholder="例如：Apple 支付异常">
+    <div class="row2">
+      <div><label>调整前</label><input type="text" id="pB" value="${esc(p.before||'')}" placeholder="Romi 预算 5000"></div>
+      <div><label>调整后</label><input type="text" id="pA" value="${esc(p.after||'')}" placeholder="Romi 预算 2500"></div>
+    </div>
+    <div class="row2">
+      <div><label>释放预算</label><input type="text" id="pR" value="${esc(p.released||'')}" placeholder="2500"></div>
+      <div><label>预算去向</label><input type="text" id="pG" value="${esc(p.target||'')}" placeholder="Luma"></div>
+    </div>
+    <label>备注</label><textarea id="pN">${esc(p.note||'')}</textarea>
+    <div class="acts"><button class="btn primary" id="ok">保存</button>
+      <button class="btn" id="cancel">取消</button></div>`;
+  show(); $('#close').onclick=hide; $('#cancel').onclick=hide;
+  $('#ok').onclick=()=>{
+    const event=$('#pE').value.trim(); if(!event){toast('触发事件不能为空');return}
+    const o={event,before:$('#pB').value.trim(),after:$('#pA').value.trim(),
+      released:$('#pR').value.trim(),target:$('#pG').value.trim(),note:$('#pN').value.trim()};
+    if(id)Object.assign(p,o); else plans.unshift({id:uid(),...o,createdAt:now()});
+    jwrite(PLKEY,plans); hide(); renderPlans(); renderAll(); toast('已保存');
+  };
+}
+$('#addPlan').onclick=()=>editPlan(null);
+
+// ---------- 时间轴 ----------
+function renderTl(){
+  const list=timeline.slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  $('#tline').innerHTML=list.length?list.map(t=>`
+    <li class="${t.kind||''}">
+      <div class="tt">${esc(t.time)}</div>
+      <div class="tx">${esc(t.text)}</div>
+      ${t.note?`<div class="tn">${esc(t.note)}</div>`:''}
+      <span class="ract"><button data-ed="${t.id}" title="编辑">✎</button>
+        <button data-del="${t.id}" title="删除">🗑</button></span>
+    </li>`).join(''):'<li style="border:none;padding:0"><div class="mini">今天还没有事件</div></li>';
+  wire('#tline',timeline,TLKEY,renderTl,editTl);
+}
+function editTl(id){
+  const t=id?timeline.find(x=>x.id===id):{time:new Date().toTimeString().slice(0,5),text:'',note:'',kind:''};
+  $('#modal').innerHTML=`
+    <div class="mhead"><h2>${id?'编辑':'＋ 新增'}时间轴事件</h2><button class="x" id="close">&times;</button></div>
+    <div class="row2">
+      <div><label>时间</label><input type="text" id="lT" value="${esc(t.time||'')}" placeholder="09:20"></div>
+      <div><label>标记</label><select id="lK">
+        <option value="" ${!t.kind?'selected':''}>🔵 进行</option>
+        <option value="bad" ${t.kind==='bad'?'selected':''}>🔴 异常</option>
+        <option value="warn" ${t.kind==='warn'?'selected':''}>🟡 关注</option>
+        <option value="ok" ${t.kind==='ok'?'selected':''}>🟢 恢复</option></select></div>
+    </div>
+    <label>事件</label><input type="text" id="lX" value="${esc(t.text||'')}" placeholder="例如：Apple 支付异常">
+    <label>备注</label><textarea id="lN">${esc(t.note||'')}</textarea>
+    <div class="acts"><button class="btn primary" id="ok">保存</button>
+      <button class="btn" id="cancel">取消</button></div>`;
+  show(); $('#close').onclick=hide; $('#cancel').onclick=hide;
+  $('#ok').onclick=()=>{
+    const text=$('#lX').value.trim(), time=$('#lT').value.trim();
+    if(!text||!time){toast('时间和事件都要填');return}
+    const o={time,text,note:$('#lN').value.trim(),kind:$('#lK').value};
+    if(id)Object.assign(t,o); else timeline.push({id:uid(),...o,createdAt:now()});
+    jwrite(TLKEY,timeline); hide(); renderTl(); renderAll(); toast('已保存');
+  };
+}
+$('#addTl').onclick=()=>editTl(null);
+
+// ---------- 最近更新 ----------
+// 不额外记一份日志，直接从各模块已有的时间戳汇出来 —— 两份数据一定会不一致。
+function recent(){
+  const f=[];
+  focus.forEach(x=>f.push({t:x.createdAt,k:'今日重点',s:x.text}));
+  todos.forEach(x=>{f.push({t:x.createdAt,k:'待办',s:x.text});
+    if(x.done&&x.doneAt)f.push({t:x.doneAt,k:'待办完成',s:x.text})});
+  plans.forEach(x=>f.push({t:x.createdAt,k:'计划调整',s:x.event}));
+  timeline.forEach(x=>f.push({t:x.createdAt,k:'时间轴',s:`${x.time} ${x.text}`}));
+  incidents.forEach(x=>{(x.log||[]).forEach(l=>f.push({t:l.time,k:'事故',s:`${x.title} — ${l.text}`}))});
+  return f.filter(x=>x.t).sort((a,b)=>b.t.localeCompare(a.t));
+}
+function renderFeed(){
+  const list=recent().slice(0,12);
+  $('#feed').innerHTML=list.length?list.map(x=>
+    `<li><span class="ft">${esc(x.t)}</span><span class="fk">${esc(x.k)}</span>
+      <span style="flex:1;min-width:0">${esc(x.s)}</span></li>`).join('')
+    :'<li style="border:none"><div class="mini">还没有任何记录</div></li>';
+}
+
+function renderAll(){renderDuty();renderStats();renderFocus();renderTodos();renderPlans();renderTl();renderFeed()}
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),1900);}
+
+// ---- filters ----
+function fillSelects(){
+  const uniq=(a)=>[...new Set(a)].sort();
+  const add=(el,vals,fmt=v=>v)=>vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=fmt(v);el.appendChild(o)});
+  add($('#fApp'),uniq(data.rows.map(r=>r.app)));
+  add($('#fPlat'),uniq(data.rows.map(r=>r.platform)));
+  add($('#fCh'),uniq(data.rows.map(r=>r.channel)),v=>({FB:'Facebook',GG:'Google',TT:'TikTok'}[v]||v));
+  add($('#fOwner'),uniq(data.rows.map(r=>r.owner)),v=>{const p=data.roster.find(x=>x.code===v);return p?`${p.name} (${v})`:v});
+}
+
+function match(r){
+  const q=$('#q').value.trim().toLowerCase();
+  if($('#fApp').value&&r.app!==$('#fApp').value)return false;
+  if($('#fPlat').value&&r.platform!==$('#fPlat').value)return false;
+  if($('#fCh').value&&r.channel!==$('#fCh').value)return false;
+  if($('#fOwner').value&&r.owner!==$('#fOwner').value)return false;
+  if(!q)return true;
+  const hay=[r.app,r.platform,r.channelName,r.owner,r.ownerName,r.note,
+    ...r.people.map(p=>p.code+p.name)].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+// 占比高低靠药丸颜色区分：嫩绿≥50% / 雾蓝 25-50% / 浅紫<25%。
+// 渠道改成单色 logo 之后，页面上有颜色的药丸就只剩占比这一种，颜色本身不再有歧义。
+function shareCls(s){return s>=.5?'hi':s>=.25?'mid':'lo'}
+
+function render(){
+  const rows=data.rows.filter(match);
+  const g=$('#grid');
+  g.innerHTML=rows.map((r,i)=>{
+    const idx=data.rows.indexOf(r);
+    return `<div class="card ${r._edited?'edited':''}" data-i="${idx}">
+      <div class="chead">
+        <span class="app">${esc(r.app)}</span>
+        <span class="tag">${esc(r.platform)}</span>
+        ${chip(r)}
+      </div>
+      <div class="owner">
+        ${avatar(r.owner,r.ownerName)}
+        <span><span class="oname">${esc(r.ownerName)}</span> <span class="ocode">${esc(r.owner)}</span></span>
+        <span class="share ${shareCls(r.ownerShare)}" title="主负责人消耗占比">${(r.ownerShare*100).toFixed(0)}%</span>
+      </div>
+      <div class="meta">
+        <span>💸 7日 <b>${money(r.spend7d)}</b></span>
+        <span>日均 <b>${money(r.dailyAvg)}</b></span>
+        <span>👥 协同 <b>${r.people.length-1}</b> 人</span>
+      </div>
+      ${r.note?`<div class="note">${esc(r.note)}</div>`:''}
+    </div>`}).join('');
+  $('#empty').style.display=rows.length?'none':'block';
+  const tot=rows.reduce((a,r)=>a+r.spend7d,0);
+  $('#count').textContent=`${rows.length} / ${data.rows.length} 个组合 · ${money(tot)}`;
+  g.querySelectorAll('.card').forEach(c=>c.onclick=()=>open(+c.dataset.i));
+}
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function open(i){
+  const r=data.rows[i];
+  const max=Math.max(...r.people.map(p=>p.share));
+  $('#modal').innerHTML=`
+    <div class="mhead">
+      <h2>${esc(r.app)}</h2>
+      <span class="tag">${esc(r.platform)}</span>
+      ${chip(r)}
+      <button class="x" id="close">&times;</button>
+    </div>
+    <div class="msub">7日消耗 ${money(r.spend7d)} · 日均 ${money(r.dailyAvg)} · 归因收益 ${money(r.rev7d)} · ROAS ${(r.rev7d/r.spend7d*100).toFixed(0)}%</div>
+
+    <label>主负责人</label>
+    <select id="mOwner">${data.roster.map(p=>
+      `<option value="${p.code}" ${p.code===r.owner?'selected':''}>${esc(p.name)} (${p.code})</option>`).join('')}</select>
+
+    <label>备注 / 协同信息</label>
+    <textarea id="mNote" placeholder="例如：TT 由刘欢主投，素材走张梦凡；夜间异常找苏屹恒">${esc(r.note)}</textarea>
+
+    <label>该组合实际在投的投手（${esc(curStart)} ~ ${esc(curEnd)} 真实消耗）</label>
+    <table>
+      <thead><tr><th>投手</th><th class="n">消耗</th><th class="n">占比</th><th class="n">注册</th><th class="n">ROAS</th></tr></thead>
+      <tbody>${r.people.map(p=>`<tr>
+        <td><span class="who">${avatar(p.code,p.name,'sm')}<span>${esc(p.name)} <span class="ocode">${esc(p.code)}</span>${p.code===r.owner?'<span class="pill">主负责人</span>':''}${!p.real?'<span class="pill gray">非投手</span>':''}</span></span></td>
+        <td class="n">${money(p.spend)}</td>
+        <td class="n">${(p.share*100).toFixed(1)}%<div class="bar-bg"><div class="bar-fg" style="width:${p.share/max*100}%"></div></div></td>
+        <td class="n">${p.reg.toLocaleString()}</td>
+        <td class="n">${p.spend?(p.rev/p.spend*100).toFixed(0)+'%':'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+    ${r.updatedAt?`<div class="msub" style="margin-top:14px">上次修改：${esc(r.updatedAt)}${r.updatedBy?' by '+esc(r.updatedBy):''}</div>`:''}
+    <div class="acts">
+      <button class="btn primary" id="save">保存</button>
+      <button class="btn" id="cancel">取消</button>
+      ${r._edited?'<button class="btn del" id="revert">还原</button>':''}
+    </div>`;
+  $('#mask').classList.add('on');
+  const close=()=>$('#mask').classList.remove('on');
+  $('#close').onclick=close; $('#cancel').onclick=close;
+  $('#save').onclick=()=>{
+    const c=$('#mOwner').value;
+    r.owner=c; r.ownerName=(data.roster.find(x=>x.code===c)||{}).name||c;
+    const p=r.people.find(x=>x.code===c);
+    r.ownerShare=p?p.share:0;
+    r.note=$('#mNote').value.trim();
+    r.updatedAt=new Date().toLocaleString('zh-CN',{hour12:false});
+    r._edited=true;
+    saveOne(r); close(); render(); toast('已保存到本机浏览器');
+  };
+  if($('#revert'))$('#revert').onclick=()=>{
+    const ov=readOverrides();
+    delete ov[key(r)];
+    if(canStore)localStorage.setItem(KEY,JSON.stringify(ov));
+    data=load(); close(); render(); toast('已还原为看板原始数据');
+  };
+}
+// ---------- 事故：新建 / 详情 / 类型管理 ----------
+const show=()=>$('#mask').classList.add('on');
+const hide=()=>$('#mask').classList.remove('on');
+const peopleOpts=v=>['<option value="">未指派</option>']
+  .concat(data.roster.map(p=>`<option value="${esc(p.name)}" ${p.name===v?'selected':''}>${esc(p.name)} (${p.code})</option>`))
+  .concat(v&&!data.roster.some(p=>p.name===v)?`<option value="${esc(v)}" selected>${esc(v)}</option>`:[]).join('');
+
+function newInc(){
+  $('#modal').innerHTML=`
+    <div class="mhead"><h2>＋ 新建事故</h2><button class="x" id="close">&times;</button></div>
+    <div class="msub">选好类型，影响范围 / 负责人 / 处理流程 / 恢复条件会自动从该类型带出来，可再改。</div>
+    <label>事故类型</label>
+    <select id="nType">${types.map(t=>`<option value="${esc(t.id)}">${t.emoji} ${esc(t.name)}</option>`).join('')}</select>
+    <label>事件标题 <span style="font-weight:400">（一句话说清出了什么事）</span></label>
+    <input type="text" id="nTitle" placeholder="例如：Luma iOS 三方支付成功率从 82% 跌到 41%">
+    <div class="row2">
+      <div><label>所属 App</label><select id="nApp">${appOpts('')}</select></div>
+      <div><label>影响渠道 <span style="font-weight:400">（可多选）</span></label>
+        <select id="nCh" multiple size="3">${Object.entries(CHN).map(([v,l])=>
+          `<option value="${v}">${l}</option>`).join('')}</select></div>
+    </div>
+    <div class="row2">
+      <div><label>严重程度</label><select id="nSev">${Object.entries(SEV).map(([v,l])=>
+        `<option value="${v}" ${v==='p1'?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div><label>负责人</label><select id="nOwner">${peopleOpts('')}</select></div>
+      <div><label>状态</label><select id="nStatus">
+        <option value="open">待处理</option><option value="doing">处理中</option></select></div>
+    </div>
+    <label>影响范围</label>
+    <textarea id="nScope"></textarea>
+    <label>备注</label>
+    <textarea id="nNote" placeholder="发现途径、当前已知信息…"></textarea>
+    <div class="acts">
+      <button class="btn primary" id="ok">创建</button>
+      <button class="btn" id="cancel">取消</button>
+    </div>`;
+  show();
+  const sync=()=>{const t=typeOf($('#nType').value);
+    $('#nScope').value=t.scope||''; $('#nOwner').value=t.owner||''};
+  sync();
+  $('#nType').onchange=sync;
+  $('#close').onclick=hide; $('#cancel').onclick=hide;
+  $('#ok').onclick=()=>{
+    const title=$('#nTitle').value.trim();
+    if(!title){toast('标题不能为空');$('#nTitle').focus();return}
+    const t=typeOf($('#nType').value);
+    const inc={id:uid(),typeId:$('#nType').value,title,owner:$('#nOwner').value,
+      app:$('#nApp').value,channels:[...$('#nCh').selectedOptions].map(o=>o.value),
+      sev:$('#nSev').value,
+      status:$('#nStatus').value,scope:$('#nScope').value.trim(),note:$('#nNote').value.trim(),
+      createdAt:now(),recoveredAt:'',
+      // 开单当下把 SOP 快照进去：类型以后改了，也不该篡改历史事故当时依据的流程
+      snapSteps:(t.steps||[]).slice(),snapRecover:t.recover||'',
+      log:[{time:now(),text:'事故创建',status:$('#nStatus').value}]};
+    incidents.unshift(inc); saveIncidents(); hide(); renderInc(); toast('事故已创建');
+  };
+}
+
+function openInc(id){
+  const i=incidents.find(x=>x.id===id); if(!i)return;
+  const t=typeOf(i.typeId);
+  const steps=(i.snapSteps&&i.snapSteps.length?i.snapSteps:t.steps)||[];
+  $('#modal').innerHTML=`
+    <div class="mhead"><h2>${t.emoji} ${esc(i.title)}</h2>
+      <span class="st ${i.status}">${ST[i.status]}</span>
+      <button class="x" id="close">&times;</button></div>
+    <div class="msub">${esc(t.name)} · 创建于 ${esc(i.createdAt||'')}${i.recoveredAt?' · 恢复于 '+esc(i.recoveredAt):''}</div>
+
+    <div class="row2">
+      <div><label>状态</label><select id="dStatus">
+        ${Object.entries(ST).map(([k,v])=>`<option value="${k}" ${i.status===k?'selected':''}>${v}</option>`).join('')}
+      </select></div>
+      <div><label>严重程度</label><select id="dSev">${Object.entries(SEV).map(([v,l])=>
+        `<option value="${v}" ${(i.sev||'p1')===v?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div><label>负责人</label><select id="dOwner">${peopleOpts(i.owner)}</select></div>
+    </div>
+    <div class="row2">
+      <div><label>所属 App</label><select id="dApp">${appOpts(i.app)}</select></div>
+      <div><label>影响渠道</label><select id="dCh" multiple size="3">${Object.entries(CHN).map(([v,l])=>
+        `<option value="${v}" ${(i.channels||[]).includes(v)?'selected':''}>${l}</option>`).join('')}</select></div>
+    </div>
+
+    <label>影响范围</label><textarea id="dScope">${esc(i.scope||'')}</textarea>
+    <label>备注</label><textarea id="dNote">${esc(i.note||'')}</textarea>
+
+    <label>建议处理流程 <span style="font-weight:400">（开单时从「${esc(t.name)}」带入的快照）</span></label>
+    <div class="sop">${steps.length?`<ol>${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`
+      :'<p style="color:var(--dim)">该类型还没配处理流程，去「⚙️ 事故类型」补上。</p>'}</div>
+    <div class="sop"><h4>恢复条件</h4><p>${esc(i.snapRecover||t.recover||'—')}</p></div>
+
+    <label>处理记录</label>
+    <div class="row2" style="margin-bottom:8px">
+      <input type="text" id="dLog" placeholder="记一条进展…（回车提交）">
+      <button class="btn" id="addLog" style="flex:0 0 auto">添加</button>
+    </div>
+    <ul class="tl" id="tl">${(i.log||[]).slice().reverse().map((l,n)=>
+      `<li class="${l.status||''}"><div>${esc(l.text)}</div><span class="t">${esc(l.time)}</span>
+        <button class="x" data-n="${(i.log.length-1-n)}" title="删除这条">&times;</button></li>`).join('')}</ul>
+
+    <div class="acts">
+      <button class="btn primary" id="save">保存</button>
+      <button class="btn" id="cancel">取消</button>
+      <button class="btn del" id="del">删除事故</button>
+    </div>`;
+  show();
+  $('#close').onclick=hide; $('#cancel').onclick=hide;
+
+  const addLog=()=>{
+    const v=$('#dLog').value.trim(); if(!v)return;
+    i.log=i.log||[]; i.log.push({time:now(),text:v});
+    saveIncidents(); openInc(id);
+  };
+  $('#addLog').onclick=addLog;
+  $('#dLog').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addLog()}};
+  $('#tl').querySelectorAll('button.x').forEach(b=>b.onclick=()=>{
+    i.log.splice(+b.dataset.n,1); saveIncidents(); openInc(id);
+  });
+
+  $('#save').onclick=()=>{
+    const ns=$('#dStatus').value;
+    if(ns!==i.status){
+      i.log=i.log||[];
+      i.log.push({time:now(),text:`状态：${ST[i.status]} → ${ST[ns]}`,status:ns});
+      if(ns==='done')i.recoveredAt=now();
+      else if(ns!=='closed')i.recoveredAt='';   // 关闭时保留原恢复时间，别抹掉
+      i.status=ns;
+    }
+    i.owner=$('#dOwner').value; i.scope=$('#dScope').value.trim(); i.note=$('#dNote').value.trim();
+    i.app=$('#dApp').value; i.sev=$('#dSev').value;
+    i.channels=[...$('#dCh').selectedOptions].map(o=>o.value);
+    saveIncidents(); hide(); renderInc(); renderAll(); toast('已保存');
+  };
+  $('#del').onclick=()=>{
+    if(!confirm(`删除事故「${i.title}」？处理记录会一起删掉，不可恢复。`))return;
+    incidents=incidents.filter(x=>x.id!==id); saveIncidents(); hide(); renderInc(); toast('已删除');
+  };
+}
+
+function mgType(){
+  $('#modal').innerHTML=`
+    <div class="mhead"><h2>⚙️ 事故类型</h2><button class="x" id="close">&times;</button></div>
+    <div class="msub">这里是应急流程的模板库。改这里只影响<b>以后</b>新开的事故 —— 已有事故用的是开单当时的流程快照，不会被改动。</div>
+    <div class="tlist" id="tlist">${types.map((t,n)=>`
+      <details class="trow">
+        <summary>${t.emoji} ${esc(t.name)}<span class="cnt">${incidents.filter(i=>i.typeId===t.id).length} 条事故</span></summary>
+        <div class="row2">
+          <div><label>Emoji</label><input type="text" data-f="emoji" data-n="${n}" value="${esc(t.emoji)}" maxlength="4"></div>
+          <div style="flex:3"><label>类型名</label><input type="text" data-f="name" data-n="${n}" value="${esc(t.name)}"></div>
+        </div>
+        <label>影响范围</label><textarea data-f="scope" data-n="${n}">${esc(t.scope)}</textarea>
+        <label>默认负责人</label><select data-f="owner" data-n="${n}">${peopleOpts(t.owner)}</select>
+        <label>建议处理流程 <span style="font-weight:400">（一行一步）</span></label>
+        <textarea data-f="steps" data-n="${n}" style="min-height:96px">${esc((t.steps||[]).join('\n'))}</textarea>
+        <label>恢复条件</label><textarea data-f="recover" data-n="${n}">${esc(t.recover)}</textarea>
+        <label>备注</label><textarea data-f="note" data-n="${n}">${esc(t.note||'')}</textarea>
+        <div class="acts"><button class="btn del" data-del="${n}">删除该类型</button></div>
+      </details>`).join('')}</div>
+    <div class="acts">
+      <button class="btn primary" id="save">保存全部</button>
+      <button class="btn" id="add">＋ 新类型</button>
+      <button class="btn" id="restore">恢复默认</button>
+    </div>`;
+  show();
+  $('#close').onclick=hide;
+  const collect=()=>{
+    $('#tlist').querySelectorAll('[data-f]').forEach(el=>{
+      const t=types[+el.dataset.n]; if(!t)return;
+      const v=el.value;
+      t[el.dataset.f] = el.dataset.f==='steps'
+        ? v.split('\n').map(s=>s.trim()).filter(Boolean) : v.trim();
+    });
+  };
+  $('#save').onclick=()=>{collect();
+    if(types.some(t=>!t.name)){toast('类型名不能为空');return}
+    saveTypes(); hide(); $('#fIApp').innerHTML='<option value="">全部 App</option>'+
+  PRODUCTS.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join('');
+fillTypeFilter(); renderInc(); renderAll(); toast('事故类型已保存')};
+  $('#add').onclick=()=>{collect();
+    types.push({id:uid(),emoji:'🔧',name:'新类型',scope:'',owner:'',steps:[],recover:'',note:''});
+    saveTypes(); mgType()};
+  $('#restore').onclick=()=>{
+    if(!confirm('恢复成默认的 4 个类型？你自己加的类型和改过的流程都会丢。已有事故不受影响。'))return;
+    types=JSON.parse(JSON.stringify(DEFAULT_TYPES)); saveTypes(); mgType(); $('#fIApp').innerHTML='<option value="">全部 App</option>'+
+  PRODUCTS.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join('');
+fillTypeFilter(); renderInc(); renderAll();
+  };
+  $('#tlist').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const t=types[+b.dataset.del], used=incidents.filter(i=>i.typeId===t.id).length;
+    if(!confirm(used?`「${t.name}」下还有 ${used} 条事故。删掉类型后，那些事故仍在，但类型会显示为「已删除」（它们的流程快照不受影响）。确定删？`
+                    :`删除类型「${t.name}」？`))return;
+    collect(); types.splice(+b.dataset.del,1); saveTypes(); mgType(); $('#fIApp').innerHTML='<option value="">全部 App</option>'+
+  PRODUCTS.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join('');
+fillTypeFilter(); renderInc(); renderAll();
+  });
+}
+
+$('#newInc').onclick=newInc;
+$('#mgType').onclick=mgType;
+['iq','fStatus','fType','fSev','fIApp','fSort'].forEach(id=>{
+  const el=$('#'+id); el.addEventListener(id==='iq'?'input':'change',renderInc);
+});
+$('#expInc').onclick=()=>{
+  const out={exportedAt:now(),types,incidents};
+  const b=new Blob([JSON.stringify(out,null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='异常处理中心.json'; a.click();
+  toast('已导出');
+};
+$('#impInc').onclick=()=>$('#impFile').click();
+$('#impFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const j=JSON.parse(r.result);
+      if(!Array.isArray(j.incidents)) throw new Error('文件里没有 incidents 数组');
+      if(!confirm(`导入 ${j.incidents.length} 条事故`+(Array.isArray(j.types)?` 和 ${j.types.length} 个类型`:'')
+        +`？\n\n会覆盖你当前本机的事故数据。`))return;
+      incidents=j.incidents;
+      if(Array.isArray(j.types)&&j.types.length) types=j.types;
+      saveIncidents(); saveTypes(); $('#fIApp').innerHTML='<option value="">全部 App</option>'+
+  PRODUCTS.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join('');
+fillTypeFilter(); renderInc(); renderAll(); toast('导入成功');
+    }catch(err){alert('导入失败：'+err.message)}
+  };
+  r.readAsText(f);
+  e.target.value='';
+};
+
+$('#mask').onclick=e=>{if(e.target===$('#mask'))$('#mask').classList.remove('on')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#mask').classList.remove('on')});
+
+['q','fApp','fPlat','fCh','fOwner'].forEach(id=>{
+  const el=$('#'+id); el.addEventListener(id==='q'?'input':'change',render);
+});
+
+/* ---------- 日期区间选择 ---------- */
+const QUICK=[{n:'近7天',d:7},{n:'近14天',d:14},{n:'近30天',d:30},{n:'全部',d:0}];
+function applyRange(s,e){
+  const D=SEED.daily; if(!D) return;
+  const lo=D.days[0], hi=D.days[D.days.length-1];
+  if(s>e){const t=s;s=e;e=t}                       // 反了就换过来
+  curStart=s<lo?lo:s; curEnd=e>hi?hi:e;            // 夹在有数据的范围内
+  $('#dStart').value=curStart; $('#dEnd').value=curEnd;
+  data=load(); render(); syncDateUI();
+}
+function syncDateUI(){
+  const D=SEED.daily; if(!D) return;
+  const nd=D.days.filter(d=>d>=curStart&&d<=curEnd).length;
+  const hi=D.days[D.days.length-1];
+  $('#dInfo').textContent=`已选 ${nd} 天 · 可选范围 ${D.days[0]} ~ ${hi}（共 ${D.days.length} 天）`;
+  // 快捷按钮高亮：结束=最新日 且 天数吻合才命中；多个同时命中（数据不足时
+  // 近30天/全部会算出同一区间）只亮天数最小的那个，避免两个按钮同时高亮让人困惑。
+  const cands=QUICK.filter(q=>{
+    if(curEnd!==hi) return false;
+    return q.d===0 ? nd===D.days.length : nd===q.d;
+  });
+  const win = cands.length ? cands.reduce((a,b)=>{
+    const av=a.d===0?Infinity:a.d, bv=b.d===0?Infinity:b.d; return bv<av?b:a;
+  }) : null;
+  $$('#quickRanges button').forEach(b=>
+    b.classList.toggle('on', !!win && +b.dataset.d===win.d));
+  $('#sub').textContent=`数据窗口 ${curStart} ~ ${curEnd} · ${data.rows.length} 个组合`
+    + (SEED.generated?` · 更新于 ${SEED.generated}`:'');
+}
+(function initDatePicker(){
+  const D=SEED.daily;
+  if(!D||!D.days.length){ $('.daterow')&&($('.daterow').style.display='none'); return }
+  const lo=D.days[0], hi=D.days[D.days.length-1];
+  ['dStart','dEnd'].forEach(id=>{const el=$('#'+id); el.min=lo; el.max=hi;});
+  $('#dStart').value=curStart; $('#dEnd').value=curEnd;
+  $('#quickRanges').innerHTML=QUICK.map(q=>
+    `<button data-d="${q.d}">${q.n}</button>`).join('');
+  $$('#quickRanges button').forEach(b=>b.onclick=()=>{
+    const d=+b.dataset.d;
+    const end=D.days[D.days.length-1];
+    const start=d===0?D.days[0]:D.days[Math.max(0,D.days.length-d)];
+    applyRange(start,end);
+  });
+  ['dStart','dEnd'].forEach(id=>$('#'+id).addEventListener('change',()=>
+    applyRange($('#dStart').value,$('#dEnd').value)));
+})();
+
+$('#export').onclick=()=>{
+  const out={...data,rows:data.rows.map(({_edited,...r})=>r)};
+  const b=new Blob([JSON.stringify(out,null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='投放负责人.json'; a.click();
+  toast('已导出');
+};
+$('#reset').onclick=()=>{
+  if(!confirm('清空你在本机做过的所有修改，还原成看板原始数据？'))return;
+  if(canStore)localStorage.removeItem(KEY);
+  data=load(); render(); toast('已全部还原');
+};
+// 副标题由 syncDateUI() 按当前选中区间刷新
+
+// 取数时的告警必须让人看见，不能只躺在日志里
+if(SEED.warnings&&SEED.warnings.length){
+  const w=$('#warn');
+  w.innerHTML=`<b>⚠️ 本次取数有 ${SEED.warnings.length} 条告警，下面的数字可能不准：</b>`
+    +`<ul>${SEED.warnings.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+  w.style.display='block';
+}
+
+// ---------- 日夜模式 ----------
+const THKEY='ug-theme';
+function applyTheme(t){
+  document.documentElement.dataset.theme=t;
+  $('#theme').textContent = t==='dark' ? '☀️' : '🌙';   // 图标是"点了会切到的目标"
+  $('#theme').title = t==='dark' ? '切到日间模式' : '切到夜间模式';
+}
+// 首选：用户存过的 > 系统偏好 > 日间
+let theme = (canStore && localStorage.getItem(THKEY))
+  || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+applyTheme(theme);
+$('#theme').onclick=()=>{
+  theme = theme==='dark' ? 'light' : 'dark';
+  applyTheme(theme);
+  if(canStore) try{localStorage.setItem(THKEY,theme)}catch(e){}
+};
+
+fillSelects(); render();
+if(typeof syncDateUI==="function") syncDateUI();
+$('#fIApp').innerHTML='<option value="">全部 App</option>'+
+  PRODUCTS.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join('');
+fillTypeFilter(); renderInc(); renderAll();
+}
+// 数据就绪前不执行任何逻辑；页面加载后发起拉取。
+bootMia();
+</script>
+</body>
+</html>
