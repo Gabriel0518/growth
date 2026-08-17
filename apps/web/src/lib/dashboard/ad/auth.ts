@@ -1,5 +1,5 @@
 /**
- * 投放操作权限校验 —— Demo 阶段：飞书部门 + 邮箱前缀白名单双通道。
+ * 投放操作权限校验 —— 历史投手资料使用飞书 open_id，普通注册账号默认只读。
  *
  * 规则（满足任一即通过）：
  *   1. 飞书部门包含「投放」
@@ -15,7 +15,6 @@ import { logger } from './logger';
 
 import type { Session } from '@/lib/dashboard/auth';
 import { fetchUserProfileByOpenId } from '@/lib/feishu/client';
-
 
 /** Demo 阶段硬编码的邮箱前缀白名单。 */
 const EMAIL_PREFIX_WHITELIST = new Set(['max', 'zhoupeijie', 'dingzhihao']);
@@ -39,7 +38,7 @@ export async function requireAdOperator(session: Session): Promise<Response | un
   const openId = session.openId;
   if (!openId) {
     return Response.json(
-      { error: '投放管理仅支持飞书登录，请使用飞书账号登录后再操作' },
+      { error: '当前账号未配置投放操作权限，请联系管理员开通' },
       { status: 403 },
     );
   }

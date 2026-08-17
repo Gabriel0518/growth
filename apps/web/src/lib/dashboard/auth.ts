@@ -32,8 +32,9 @@ const SECRET =
 export interface Session {
   authenticated: boolean;
   panelAccess: boolean;
-  /** 飞书登录后带上，仅审计/展示用；老 token（账密/M2M）没有，保持向后兼容。 */
+  /** 历史飞书会话字段，仅用于兼容已有投手权限数据。 */
   openId?: string;
+  /** 当前账号展示名，用于审计广告操作。 */
   name?: string;
 }
 
@@ -41,7 +42,7 @@ interface TokenPayload {
   a: 0 | 1;
   p: 0 | 1;
   exp: number;
-  // 可选：飞书身份审计字段。老 token 无此字段仍有效。
+  // oid 仅兼容历史飞书会话；nm 是当前账号展示名。
   oid?: string;
   nm?: string;
 }
@@ -54,7 +55,7 @@ function sign(data: string): string {
   return b64url(crypto.createHmac('sha256', SECRET).update(data).digest());
 }
 
-/** 通用「body.sig」签名序列化：所有无状态签名 cookie（会话/pending/state）共用一把密钥。 */
+/** 通用「body.sig」签名序列化。 */
 function encodeSigned(payload: object): string {
   const body = b64url(Buffer.from(JSON.stringify(payload)));
   return `${body}.${sign(body)}`;
@@ -86,7 +87,7 @@ export function buildSessionToken(session: Session): string {
     p: session.panelAccess ? 1 : 0,
     exp: Date.now() + MAX_AGE_MS,
   };
-  // 飞书身份存在才写：老逻辑（账密/M2M）不带这两字段，避免污染 token。
+  // 可选字段存在才写，保持老 token 向后兼容。
   if (session.openId !== undefined) payload.oid = session.openId;
   if (session.name !== undefined) payload.nm = session.name;
   return encodeSigned(payload);
@@ -95,12 +96,14 @@ export function buildSessionToken(session: Session): string {
 /** 序列化 Set-Cookie 值。 */
 export function sessionCookie(session: Session): string {
   const token = buildSessionToken(session);
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_SEC.toString()}`;
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_SEC.toString()}${secure}`;
 }
 
 /** 清除会话 cookie（登出）。 */
 export function clearSessionCookie(): string {
-  return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`;
 }
 
 function parseCookies(header: string | null): Record<string, string> {
@@ -196,90 +199,4 @@ export function requireApiAuth(request: Request): Session | Response {
     return { authenticated: true, panelAccess: false };
   }
   return Response.json({ error: 'Unauthorized' }, { status: 401 });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 飞书登录用的两个短期签名 cookie（无状态，跟会话 cookie 同一把 HMAC 密钥）。
-// 之所以用签名 cookie 而不是内存 session：web 是多副本无状态部署，pending 状态不能
-// 落在某个副本内存里；challenge 真身在 PG 共享，cookie 只带「我在等哪个 nonce」。
-// ─────────────────────────────────────────────────────────────────────────────
-
-const PENDING_COOKIE = 'dashboard_pending';
-// challenge 本身 TTL 3 分钟；cookie 放宽到 5 分钟做兜底（过期以 PG 的 expires_at 为准）。
-const PENDING_MAX_AGE_MS = 5 * 60 * 1000;
-const STATE_COOKIE = 'dashboard_oauth_state';
-const STATE_MAX_AGE_MS = 10 * 60 * 1000;
-
-export interface PendingLogin {
-  nonce: string;
-  openId: string;
-  name: string;
-}
-
-interface PendingPayload {
-  n: string;
-  o: string;
-  m: string;
-  exp: number;
-}
-
-/** 种「等待确认」cookie：记住网页端在等哪个 nonce（及是谁），供 /login/status 轮询。 */
-export function pendingCookie(pending: PendingLogin): string {
-  const payload: PendingPayload = {
-    n: pending.nonce,
-    o: pending.openId,
-    m: pending.name,
-    exp: Date.now() + PENDING_MAX_AGE_MS,
-  };
-  const maxAge = Math.floor(PENDING_MAX_AGE_MS / 1000).toString();
-  return `${PENDING_COOKIE}=${encodeSigned(payload)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
-}
-
-/** 清除 pending cookie（确认成功 / 放弃）。 */
-export function clearPendingCookie(): string {
-  return `${PENDING_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
-}
-
-/** 读 pending cookie，签名/结构/过期任一不符返回 undefined。 */
-export function readPending(request: Request): PendingLogin | undefined {
-  const token = parseCookies(request.headers.get('cookie'))[PENDING_COOKIE];
-  if (token === undefined) return undefined;
-  const obj = decodeSigned(token);
-  if (!obj) return undefined;
-  const exp = obj['exp'];
-  if (typeof exp !== 'number' || exp < Date.now()) return undefined;
-  const n = obj['n'];
-  const o = obj['o'];
-  const m = obj['m'];
-  if (typeof n !== 'string' || typeof o !== 'string' || typeof m !== 'string') return undefined;
-  return { nonce: n, openId: o, name: m };
-}
-
-interface StatePayload {
-  s: string;
-  exp: number;
-}
-
-/** 种 OAuth state cookie：防 CSRF，回调时与 URL 上的 state 比对。 */
-export function stateCookie(state: string): string {
-  const payload: StatePayload = { s: state, exp: Date.now() + STATE_MAX_AGE_MS };
-  const maxAge = Math.floor(STATE_MAX_AGE_MS / 1000).toString();
-  return `${STATE_COOKIE}=${encodeSigned(payload)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
-}
-
-/** 清除 state cookie（回调消费后）。 */
-export function clearStateCookie(): string {
-  return `${STATE_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
-}
-
-/** 读并校验 state cookie，返回其中的 state 值（用于与回调 URL 的 state 比对）。 */
-export function readState(request: Request): string | undefined {
-  const token = parseCookies(request.headers.get('cookie'))[STATE_COOKIE];
-  if (token === undefined) return undefined;
-  const obj = decodeSigned(token);
-  if (!obj) return undefined;
-  const exp = obj['exp'];
-  if (typeof exp !== 'number' || exp < Date.now()) return undefined;
-  const s = obj['s'];
-  return typeof s === 'string' ? s : undefined;
 }

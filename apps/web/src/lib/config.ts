@@ -41,11 +41,8 @@ interface FeishuConfig {
 }
 
 interface DashboardConfig {
-  adminUser: string;
   adminPass: string;
-  /** 应急兜底：LEGACY_ADMIN_LOGIN=1 时登录页仍渲染账密表单（默认关闭，走飞书登录）。 */
-  legacyAdminLogin: boolean;
-  /** 拼 OAuth redirect_uri 用的对外基址（飞书后台白名单里那个）。 */
+  /** 历史外部回调基址，仍供飞书资料兼容模块读取。 */
   baseUrl: string;
   xmp: XmpConfig;
   athena: AthenaConfig;
@@ -55,9 +52,8 @@ interface DashboardConfig {
 
 export const config: DashboardConfig = {
   // ── 鉴权 ──
-  adminUser: envOr('DASHBOARD_ADMIN_USER', 'admin'),
-  adminPass: required('DASHBOARD_ADMIN_PASS'),
-  legacyAdminLogin: process.env['LEGACY_ADMIN_LOGIN'] === '1',
+  // DASHBOARD_ADMIN_PASS 仅保留给历史 M2M 口令兼容；网页账号已迁移到 dashboard_user。
+  adminPass: envOr('DASHBOARD_ADMIN_PASS', ''),
   baseUrl: envOr('APP_BASE_URL', 'https://ug-data-callback.sitinai.com'),
 
   // ── XMP Open API ──
@@ -80,7 +76,7 @@ export const config: DashboardConfig = {
     model: envOr('LLM_MODEL', 'zai-org/GLM-5.1'),
   },
 
-  // ── 飞书 OAuth + 卡片登录（方案 C）──
+  // ── 历史飞书资料与投放权限兼容 ──
   feishu: {
     appId: required('FEISHU_APP_ID'),
     appSecret: required('FEISHU_APP_SECRET'),

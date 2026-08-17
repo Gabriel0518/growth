@@ -89,13 +89,21 @@ export async function ensureRecordTable(conn: Queryable, tableName: string): Pro
 }
 
 /**
- * 飞书 OAuth + 卡片确认登录用表（方案 C）。幂等 DDL，migrate 自动应用。
- * - fs_user：已授权用户名录，二次登录靠它列出可选人（open_id 是飞书侧稳定主键）。
- * - login_challenge：一次性登录/敏感操作挑战。nonce 一次性，TTL 由写入方按 expires_at 控制；
- *   卡片回调按 nonce 命中并校验 open_id 归属（防串号），仅 pending 可被 confirm/reject。
- * 邮箱反查 open_id 不可靠（通讯录常缺登记邮箱），故走 OAuth 拿 open_id，别退回邮箱反查。
+ * 主站账号登录表。密码只保存 scrypt 哈希，不保存明文；用户名在写入前统一转小写。
+ * 账号注册/登录不依赖飞书，飞书表保留给历史身份与权限数据兼容使用。
  */
 export async function ensureAuthTables(conn: Queryable): Promise<void> {
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS dashboard_user (
+      username      TEXT PRIMARY KEY,
+      password_hash TEXT NOT NULL,
+      display_name  TEXT NOT NULL DEFAULT '',
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+
+  // 历史飞书 OAuth + 卡片确认表：保留以兼容旧数据和权限资料，不再作为登录入口。
   await conn.query(`
     CREATE TABLE IF NOT EXISTS fs_user (
       open_id    TEXT PRIMARY KEY,

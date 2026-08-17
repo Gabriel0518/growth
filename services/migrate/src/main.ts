@@ -15,7 +15,7 @@ import {
  * 统一 PG schema 迁移器 —— 幂等应用所有建表/索引 DDL。
  * 覆盖：user_lookup / athena_revenue、ingest_inbox（上报缓冲）、
  * daily_snapshots / xmp_cache / eltv_cache（看板存储）、当前月表 records_YYYYMM、
- * fs_user / login_challenge（飞书登录）。
+ * dashboard_user（普通账号）、fs_user / login_challenge（历史飞书资料兼容）。
  * 可反复执行（全部 CREATE ... IF NOT EXISTS）。
  */
 async function main(): Promise<void> {
@@ -30,7 +30,7 @@ async function main(): Promise<void> {
   await ensureDashboardTables(pool);
   console.log('[migrate] dashboard tables ready: daily_snapshots, xmp_cache, eltv_cache');
   await ensureAuthTables(pool);
-  console.log('[migrate] auth tables ready: fs_user, login_challenge');
+  console.log('[migrate] auth tables ready: dashboard_user, fs_user, login_challenge');
   await ensureDemoUserTable(pool);
   console.log('[migrate] demo portal table ready: demo_portal_user (seed: sitin)');
   await ensureAdTables(pool);

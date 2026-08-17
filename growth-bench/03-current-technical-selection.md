@@ -25,22 +25,22 @@ updated: 2026-08-17
 
 Agentic UG 当前采用一套以 TypeScript 和 PostgreSQL 为中心的模块化单体架构：
 
-| 技术域     | 当前选型                                     | 核心目的                                    |
-| ---------- | -------------------------------------------- | ------------------------------------------- |
-| 运行时     | Node.js 22                                   | 统一 Web、数据任务和工具的运行时            |
-| 语言       | TypeScript 5.7，严格模式                     | 提前发现数据结构和空值问题                  |
-| 包管理     | pnpm 11.7 workspace                          | 管理单体仓库和内部包依赖                    |
-| Web        | Next.js 15 App Router + React 19             | 同时承载页面、内部 API 和 Postback 接收端   |
-| 前端样式   | Tailwind CSS 4 + CSS 变量 + 少量 CSS Modules | 支持内部看板双主题和独立客户门户            |
-| 图表与日期 | Chart.js 4 + Flatpickr 4                     | 延续看板图表与日期范围交互                  |
-| 后端任务   | Node.js 有界 CLI Job                         | 将抓取、批写和迁移从 Web 进程分离           |
-| 数据库     | PostgreSQL + `pg`，无 ORM                    | 统一存储并保留对 SQL 和旧业务口径的精确控制 |
-| 数据缓冲   | PostgreSQL `UNLOGGED ingest_inbox`           | 解耦高频 Postback 接收与月表批量写入        |
-| 调度       | Kubernetes CronJob                           | 避免多副本 Web 内重复执行定时任务           |
-| 容器平台   | 阿里云 ACK                                   | 承载 Web Deployment 和周期 Job              |
-| 发布方式   | Jenkins 构建镜像 + Helm/ArgoCD GitOps        | 应用代码与部署声明分仓管理                  |
-| 内部鉴权   | 飞书 OAuth + 卡片确认 + HMAC Cookie          | 对接组织身份并适配无状态多副本              |
-| AI         | SiliconFlow OpenAI 兼容接口 + GLM            | 提供流式投放建议                            |
+| 技术域     | 当前选型                                          | 核心目的                                    |
+| ---------- | ------------------------------------------------- | ------------------------------------------- |
+| 运行时     | Node.js 22                                        | 统一 Web、数据任务和工具的运行时            |
+| 语言       | TypeScript 5.7，严格模式                          | 提前发现数据结构和空值问题                  |
+| 包管理     | pnpm 11.7 workspace                               | 管理单体仓库和内部包依赖                    |
+| Web        | Next.js 15 App Router + React 19                  | 同时承载页面、内部 API 和 Postback 接收端   |
+| 前端样式   | Tailwind CSS 4 + CSS 变量 + 少量 CSS Modules      | 支持内部看板双主题和独立客户门户            |
+| 图表与日期 | Chart.js 4 + Flatpickr 4                          | 延续看板图表与日期范围交互                  |
+| 后端任务   | Node.js 有界 CLI Job                              | 将抓取、批写和迁移从 Web 进程分离           |
+| 数据库     | PostgreSQL + `pg`，无 ORM                         | 统一存储并保留对 SQL 和旧业务口径的精确控制 |
+| 数据缓冲   | PostgreSQL `UNLOGGED ingest_inbox`                | 解耦高频 Postback 接收与月表批量写入        |
+| 调度       | Kubernetes CronJob                                | 避免多副本 Web 内重复执行定时任务           |
+| 容器平台   | 阿里云 ACK                                        | 承载 Web Deployment 和周期 Job              |
+| 发布方式   | Jenkins 构建镜像 + Helm/ArgoCD GitOps             | 应用代码与部署声明分仓管理                  |
+| 内部鉴权   | PostgreSQL 账号表 + scrypt 密码哈希 + HMAC Cookie | 支持普通注册登录并适配无状态多副本          |
+| AI         | SiliconFlow OpenAI 兼容接口 + GLM                 | 提供流式投放建议                            |
 
 这个方案的首要目标不是追求最新架构，而是：
 
@@ -66,7 +66,6 @@ flowchart LR
   WEB --> RECORDS
   WEB --> SNAPSHOT
   WEB --> FB["Facebook Graph / Marketing API"]
-  WEB --> FEISHU["飞书 OAuth / Card"]
   WEB --> LLM["SiliconFlow / GLM"]
 ```
 
@@ -249,7 +248,7 @@ HTTP 层使用 Next.js Route Handler，约定：
 - Postback 月表 `records_YYYYMM`。
 - `user_lookup` 和 Athena 收入。
 - 日快照、XMP 缓存、eLTV 缓存和抓取状态。
-- 飞书用户与登录挑战。
+- 主站账号，以及历史飞书用户与登录挑战兼容数据。
 - 客户门户账号。
 - Facebook Token、账户、素材、Campaign、AdSet、Ad。
 
@@ -323,12 +322,12 @@ Postback Route Handler 不直接写索引较重的月表，而是：
 
 内部主站采用：
 
-- 飞书 OAuth 获取稳定 `open_id`。
-- 飞书交互卡片二次确认。
-- PostgreSQL 保存用户目录和一次性挑战。
+- PostgreSQL `dashboard_user` 账号表保存用户名与 scrypt 密码哈希。
+- 用户名密码登录和注册，注册成功后直接建立会话。
 - HMAC 签名、HttpOnly、SameSite=Lax 的无状态 Cookie。
-- OAuth `state` 签名 Cookie 防止 CSRF。
 - Cookie 7 天有效，显式 `SESSION_SECRET` 优先。
+
+历史 `fs_user` / `login_challenge` 表和飞书资料保留用于兼容投手权限数据，但不再作为主站登录入口。
 
 选择无状态 Cookie 是为了让多个 Web 副本共享登录态，不依赖进程内 Session Store。
 
@@ -345,7 +344,7 @@ Postback Route Handler 不直接写索引较重的月表，而是：
 
 客户门户使用独立 Cookie、独立签名盐和独立账号表，避免外部客户会话与内部主站互通。
 
-当前账号口令以明文保存在数据库，并存在默认演示账号。这只能视为演示阶段实现，不适合作为正式客户系统的长期方案。正式开放前应切换到密码哈希、强制初始化、登录限速和账号生命周期管理。
+客户门户当前账号口令仍以明文保存在数据库，并存在默认演示账号。这只能视为演示阶段实现，不适合作为正式客户系统的长期方案。
 
 ### 9.4 M2M 接口与接口保护
 
@@ -367,7 +366,7 @@ Postback Route Handler 不直接写索引较重的月表，而是：
 | Adjust/AD   | 自有埋点和购买回传                               | S2S Postback 到 Next.js                    |
 | XMP         | Facebook/Google/TikTok 投放消耗                  | Open API + PostgreSQL 缓存                 |
 | Facebook    | Token、账户、素材、Campaign、AdSet、Ad、Insights | Graph/Marketing API 客户端                 |
-| 飞书        | 内部身份、登录确认、联系人和卡片                 | 官方 Node SDK + Open API + 长连接          |
+| 飞书        | 历史投手资料和广告操作权限补全，不作为登录入口   | 官方 Node SDK + Open API                   |
 | SiliconFlow | AI 投放建议                                      | OpenAI 兼容 Chat Completions，SSE 流式代理 |
 | DAU 服务    | 日报成本分摊相关数据                             | 服务端 HTTP 请求                           |
 

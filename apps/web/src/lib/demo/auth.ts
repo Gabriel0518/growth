@@ -1,5 +1,5 @@
 /**
- * sitin.ai 客户门户（/demo）的独立鉴权 —— 与主站飞书 session 完全隔离。
+ * sitin.ai 客户门户（/demo）的独立鉴权 —— 与主站账号 session 完全隔离。
  *
  * 为什么不复用 dashboard_session：门户面向外部客户、只该看到合创(partnership)那一小块，
  * 拿到它的 cookie 绝不能反过来进主站看板；反之主站 token 也不该直接当门户凭证使。所以
