@@ -28,6 +28,8 @@ output/
 *.html
 # 例外：/mia 公开静态页（同事「投放协同中心」单文件 HTML）需随仓库部署，勿忽略
 !apps/web/public/mia/index.html
+# 例外：Partnership ADS 的产品图标是业务素材、随页面渲染，不是临时截图，勿忽略
+!apps/web/public/pa/icons/*.png
 public-downloads/
 debug-*
 tmp-*

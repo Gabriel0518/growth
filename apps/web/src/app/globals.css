@@ -1,5 +1,36 @@
 @import 'tailwindcss';
 
+/* ===== Partnership ADS 自托管字体 =====
+   自托管而非 next/font/google：线上镜像在阿里云构建，构建期访问 Google Fonts 不可靠。
+   字体在 public/fonts/，随附 SIL OFL 许可证（Inter 与 JetBrains Mono 都是 OFL，必须附）。
+
+   Inter 用可变字体单文件覆盖 400–700，比四个静态字重加起来还小。
+   mono 只装 400 / 700：设计稿里 mono 只用到这两档（.pill / .metric__value / 表头是 700，
+   DataTrust 与 eyebrow 是 400），600 一次都没出现。webfont 包里其实有 SemiBold，装了也没人用。
+   ⚠️ Inter 不含中文，字体栈里 PingFang SC / Noto Sans SC 必须留在其后 —— campaign 名、
+   素材名、平台拒审理由都是中文用户数据，去掉会让表格字重行高错乱。 */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/InterVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* 设计令牌：亮/暗双主题。
    @theme 内的 --color-x 会生成 bg-x、text-x、border-x 等工具类，且这些工具类在运行时
    引用 CSS 变量 —— 因此只要在 [data-theme='...'] 里覆盖同名变量即可整体切换主题。
@@ -22,8 +53,126 @@
   --radius-card: 12px;
   --shadow-card: 0 6px 28px rgba(0, 0, 0, 0.35);
 
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+}
+
+/* ===== Partnership ADS 设计令牌（pa-）=====
+   来源：Figma 文件 OqpGtNg1QQgihDHd2YvZ2S，变量集合 `Partnership ADS · Color` / `Dimension`。
+   变量名就是各变量上设的 WEB code syntax，Dev Mode 的输出可以原样粘过来。
+
+   ⚠️ 刻意**不**放进上面的 [data-theme] 覆盖块：这套 token 与主站的明暗切换无关，
+   永远浅色单主题（DESIGN-SPEC v0.2 已把深色整套删除）。pa- 前缀与主站 --color-* 无碰撞。
+
+   ⚠️⚠️ 间距 / 字号 / 行高一律写死 px，不能复用 Tailwind 默认标度 ——
+   本仓库 html { font-size: 14.5px }（下方，为提高看板密度），Tailwind 的 rem 标度会
+   整体缩水到 90.6%：p-4 会变成 14.5px 而不是设计稿要的 16px。这个偏差肉眼极难发现。 */
+@theme {
+  /* 表面 */
+  --color-pa-bg-app: #f3f6fa;
+  --color-pa-surface: #ffffff;
+  --color-pa-surface-muted: #edf3f7;
+
+  /* 描边 */
+  --color-pa-border-subtle: #e5edf3;
+  --color-pa-border: #d7e0e8;
+  --color-pa-border-muted: #d7e5ec;
+  --color-pa-border-strong: #bacbd6;
+
+  /* 文字。⚠️ content-placeholder 白底仅 2.9:1 —— 只能用于图形与占位符，
+     任何承载信息的文字都不得使用（DESIGN-SPEC §5）。 */
+  --color-pa-content: #0f172a;
+  --color-pa-content-secondary: #334155;
+  --color-pa-content-body: #475569;
+  --color-pa-content-tertiary: #64748b;
+  --color-pa-content-placeholder: #94a3b8;
+
+  /* 品牌 / 交互。⚠️ accent-ui 是 3.7:1 —— 仅填充，不得承载文字。 */
+  --color-pa-accent: #0e7490;
+  --color-pa-accent-ui: #0891b2;
+  --color-pa-accent-subtle: #d9edf3;
+  --color-pa-on-accent: #ffffff;
+  --color-pa-ring: #0891b2;
+
+  /* 数据语义 —— 保留字。绿/红/琥珀只表达数据含义，
+     禁止用作品牌色、按钮色或导航色（DESIGN-SPEC §1.5）。 */
+  --color-pa-positive: #047857;
+  --color-pa-positive-subtle: #e9f6ef;
+  --color-pa-warning: #b45309;
+  --color-pa-warning-subtle: #fff3e5;
+  --color-pa-negative: #dc2626;
+  --color-pa-negative-subtle: #fdecec;
+
+  /* 图表槽位 —— 固定，永不循环。槽位 3–5 白底 <3:1，
+     必须配直接标注，不能只靠颜色图例区分。 */
+  --color-pa-chart-1: #4778cf;
+  --color-pa-chart-2: #eb6834;
+  --color-pa-chart-3: #51af7a;
+  --color-pa-chart-4: #e7a52d;
+  --color-pa-chart-5: #4a3aa7;
+
+  /* 间距（px，理由见上）。编号对齐 Figma 的 spacing/1…8，7 在设计里没用到故跳过。 */
+  --spacing-pa-1: 4px;
+  --spacing-pa-2: 8px;
+  --spacing-pa-3: 12px;
+  --spacing-pa-4: 16px;
+  --spacing-pa-5: 20px;
+  --spacing-pa-6: 24px;
+  --spacing-pa-8: 32px;
+
+  /* 字号（px）+ 配套行高。按 px 数命名，改稿时能直接与 Figma 面板对上。 */
+  --text-pa-8: 8px;
+  --text-pa-8--line-height: 10px;
+  --text-pa-9: 9px;
+  --text-pa-9--line-height: 12px;
+  --text-pa-10: 10px;
+  --text-pa-10--line-height: 13px;
+  --text-pa-11: 11px;
+  --text-pa-11--line-height: 14px;
+  --text-pa-12: 12px;
+  --text-pa-12--line-height: 16px;
+  --text-pa-13: 13px;
+  --text-pa-13--line-height: 18px;
+  --text-pa-14: 14px;
+  --text-pa-14--line-height: 20px;
+  --text-pa-15: 15px;
+  --text-pa-15--line-height: 20px;
+  --text-pa-17: 17px;
+  --text-pa-17--line-height: 22px;
+  --text-pa-20: 20px;
+  --text-pa-20--line-height: 26px;
+  --text-pa-25: 25px;
+  --text-pa-25--line-height: 32px;
+  --text-pa-27: 27px;
+  --text-pa-27--line-height: 36px;
+  --text-pa-28: 28px;
+  --text-pa-28--line-height: 34px;
+  --text-pa-34: 34px;
+  --text-pa-34--line-height: 42px;
+
+  /* 圆角 */
+  --radius-pa-sm: 4px;
+  --radius-pa-md: 8px;
+  --radius-pa-lg: 12px;
+  --radius-pa-full: 999px;
+
+  /* 高度 */
+  --shadow-pa-1: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-pa-2: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --shadow-pa-3: 0 24px 48px rgba(15, 23, 42, 0.16);
+
+  /* 字体栈 */
+  --font-pa-ui:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Noto Sans SC',
+    'Microsoft YaHei', sans-serif;
+  --font-pa-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* 非 @theme 的尺寸常量：这两个不需要生成工具类，只在 arbitrary value 里被引用
+   （如 min-h-[var(--pa-hit-target)]），放 :root 比塞进 @theme 干净。 */
+:root {
+  --pa-hit-target: 44px;
+  --pa-row-h: 36px;
 }
 
 /* ===== 暗色主题（默认） ===== */
@@ -175,4 +324,73 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
+}
+
+/* ===== Partnership ADS 基础样式 =====
+   只放 Tailwind 工具类表达不了、或表达出来严重损可读性的东西。
+   其余一律用 pa- 工具类在组件里写，不要往这里加。 */
+@layer components {
+  /* 所有数字都要用。三件套缺一不可：等宽数位保证列对齐，关连字 + liga:0 让
+     1/l 和 0/O 在消耗列里不会看混（DESIGN-SPEC §5）。 */
+  .pa-num {
+    font-family: var(--font-pa-mono);
+    font-variant-numeric: tabular-nums;
+    font-variant-ligatures: none;
+    font-feature-settings:
+      'tnum' 1,
+      'liga' 0;
+  }
+
+  /* 命中区 44×44。规则是「视觉可以更小，用透明 padding 撑开」——
+     不能靠放大图形来满足，那会破坏设计密度。 */
+  .pa-hit {
+    position: relative;
+  }
+  .pa-hit::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, var(--pa-hit-target));
+    height: max(100%, var(--pa-hit-target));
+    transform: translate(-50%, -50%);
+  }
+
+  /* StatusPill / DataTrust 左侧的小圆点。伪元素无法用工具类表达。
+     ⚠️ 圆点取 currentColor —— 它只是强化，颜色永远不是唯一信号，
+     文字必须同时存在（COMPONENTS.md 决定②）。 */
+  .pa-dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-pa-full);
+    background: currentColor;
+    flex: 0 0 6px;
+  }
+
+  /* 骨架屏微光。@keyframes + 背景位移，工具类做不了。 */
+  .pa-skel {
+    background: linear-gradient(
+      90deg,
+      var(--color-pa-surface-muted) 25%,
+      #f6fafc 50%,
+      var(--color-pa-surface-muted) 75%
+    );
+    background-size: 400% 100%;
+    animation: pa-shimmer 1.4s infinite;
+    border-radius: var(--radius-pa-sm);
+  }
+  @keyframes pa-shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pa-skel {
+      animation: none;
+    }
+  }
 }
