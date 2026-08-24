@@ -11,11 +11,11 @@ import { NAV_GROUPS, navKeyFor } from './nav';
 import { usePaStore } from './store';
 import { useToast } from './toast';
 
-import { Avatar, Button, SearchField, Sidebar } from '@/components/ui';
+import { Avatar, BrandLockup, Button, SearchField, Sidebar } from '@/components/ui';
 import { activeCampaigns } from '@/lib/pa/derive';
 
 /** 页面把自己的面包屑传上来。默认只有根节点。 */
-const CRUMB_ROOT: Crumb = { label: 'Partnership ADS', href: '/pa' };
+const CRUMB_ROOT: Crumb = { label: 'Sitin.ai', href: '/pa' };
 
 export function AppShell({ children }: { children: ReactNode }): ReactNode {
   const pathname = usePathname();
@@ -77,10 +77,7 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
         )}
         brand={
           <Link href="/pa" className="flex items-center gap-[10px]">
-            <span className="grid h-[30px] w-[30px] place-items-center rounded-pa-md bg-pa-accent text-pa-11 font-bold tracking-[0.04em] text-pa-on-accent">
-              PA
-            </span>
-            <span className="text-pa-14 font-bold">Partnership ADS</span>
+            <BrandLockup compact />
           </Link>
         }
         footer={

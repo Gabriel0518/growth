@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState, type ReactNode } from 'react';
 
 import { AreaChart } from '@/components/pa';
 import { usePaStore } from '@/components/pa';
-import { Button, StatusPill } from '@/components/ui';
+import { BrandLockup, Button, StatusPill } from '@/components/ui';
 
 /** 登录页左侧的势能示意图。数值是演示用的固定序列，不参与业务计算。 */
 const MOMENTUM = [12, 18, 16, 27, 34, 41, 39, 52, 61, 68, 79];
@@ -50,10 +50,7 @@ function LoginForm(): ReactNode {
         <span className="absolute bottom-[-66px] left-[-54px] h-[150px] w-[150px] rounded-full bg-pa-accent" />
 
         <div className="relative z-[2] flex items-center gap-[10px] text-pa-14 font-bold">
-          <span className="grid h-[30px] w-[30px] place-items-center rounded-pa-md bg-pa-accent text-pa-11 text-pa-on-accent">
-            PA
-          </span>
-          Partnership ADS
+          <BrandLockup compact />
         </div>
         <p className="relative z-[2] mt-[34px] font-pa-mono text-pa-10 uppercase tracking-[0.16em] text-pa-content-tertiary">
           Campaign intelligence / Live
@@ -90,10 +87,7 @@ function LoginForm(): ReactNode {
       <section className="grid place-items-center border-l border-pa-border bg-pa-surface px-pa-8 py-[40px]">
         <div className="grid w-full max-w-[380px] gap-pa-4">
           <div className="flex items-center gap-[10px] text-pa-14 font-bold lg:hidden">
-            <span className="grid h-[30px] w-[30px] place-items-center rounded-pa-md bg-pa-accent text-pa-11 text-pa-on-accent">
-              PA
-            </span>
-            Partnership ADS
+            <BrandLockup compact />
           </div>
           <h2 className="mt-[26px] text-pa-25 font-bold tracking-[-0.01em]">Welcome back</h2>
           <p className="text-pa-11 text-pa-content-tertiary">

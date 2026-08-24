@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { PaStoreProvider, ToastProvider } from '@/components/pa';
 
 export const metadata: Metadata = {
-  title: 'Partnership ADS',
+  title: 'Sitin.ai · Partnership ADS',
   description: 'Cross-platform KOL advertising — campaigns, creators, creative and reporting.',
 };
 

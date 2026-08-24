@@ -9,6 +9,7 @@
  * 基础组件，且强依赖尚未确定的路由与状态方案，等产品页面落地时一起定。
  */
 export { Avatar, type AvatarSize } from './avatar';
+export { BrandLockup, BrandMark } from './brand-mark';
 export { Button, buttonClasses, type ButtonSize, type ButtonVariant } from './button';
 export { Checkbox } from './checkbox';
 export { cn } from './cn';

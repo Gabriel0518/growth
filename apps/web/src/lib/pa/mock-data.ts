@@ -6,8 +6,7 @@
  * 所以在一处改动会在其他页面同步反映，而不是每屏各造一份假数据。
  *
  * 原型解决过 Figma 稿里的两处自相矛盾，这里沿用同样的取舍：
- *   - **市场**：表格里八个 campaign 全标 `/ US`，而 Overview 显示 APAC/EU/NA/JP/SEA。
- *     取 Overview 的。
+ *   - **市场**：所有 campaign 与 creator mock 都统一为 US，与最新 Figma Draft 的市场筛选一致。
  *   - **创作者**：Overview 列了八个 KOL Network 里没有的名字。统一成十二人的一份名册。
  *
  * 还有一处**留着没动、值得决策**：`03.5 · Campaign detail` 把 Yahtzee 那条显示成
@@ -121,7 +120,7 @@ export const CAMPAIGNS: Campaign[] = [
   {
     id: 'CMP-2408-031',
     name: 'Summer partnership',
-    market: 'APAC',
+    market: 'US',
     productId: 'yahtzee',
     status: 'running',
     owner: 'Han Xu',
@@ -163,7 +162,7 @@ export const CAMPAIGNS: Campaign[] = [
   {
     id: 'CMP-2408-019',
     name: 'New season launch',
-    market: 'EU',
+    market: 'US',
     productId: 'nordwell',
     status: 'review',
     owner: 'Zoe Martin',
@@ -184,7 +183,7 @@ export const CAMPAIGNS: Campaign[] = [
   {
     id: 'CMP-2408-014',
     name: 'Back-to-school creators',
-    market: 'NA',
+    market: 'US',
     productId: 'paper',
     status: 'running',
     owner: 'Leo Park',
@@ -205,7 +204,7 @@ export const CAMPAIGNS: Campaign[] = [
   {
     id: 'CMP-2408-009',
     name: 'Holiday preview',
-    market: 'JP',
+    market: 'US',
     productId: 'kotoba',
     status: 'review',
     owner: 'Mina Kato',
@@ -226,7 +225,7 @@ export const CAMPAIGNS: Campaign[] = [
   {
     id: 'CMP-2408-004',
     name: 'Always-on beauty',
-    market: 'SEA',
+    market: 'US',
     productId: 'lumea',
     status: 'running',
     owner: 'Han Xu',
@@ -308,7 +307,7 @@ export const CREATORS: Creator[] = [
     id: 'kenji',
     name: 'Kenji Sato',
     handle: '@kenjisato',
-    market: 'JP',
+    market: 'US',
     platforms: ['ig', 'yt'],
     tags: ['Tech', 'Gaming'],
     followers: 860_000,
@@ -323,7 +322,7 @@ export const CREATORS: Creator[] = [
     id: 'lucia',
     name: 'Lucia Moreno',
     handle: '@luciamoreno',
-    market: 'ES',
+    market: 'US',
     platforms: ['tt'],
     tags: ['Fashion', 'Lifestyle'],
     followers: 2_100_000,
@@ -353,7 +352,7 @@ export const CREATORS: Creator[] = [
     id: 'priya',
     name: 'Priya Nair',
     handle: '@priyanair',
-    market: 'IN',
+    market: 'US',
     platforms: ['ig', 'tt'],
     tags: ['Food', 'Travel'],
     followers: 1_600_000,
@@ -368,7 +367,7 @@ export const CREATORS: Creator[] = [
     id: 'sofia',
     name: 'Sofia Lindqvist',
     handle: '@sofialind',
-    market: 'SE',
+    market: 'US',
     platforms: ['ig'],
     tags: ['Home', 'DIY'],
     followers: 420_000,
@@ -383,7 +382,7 @@ export const CREATORS: Creator[] = [
     id: 'diego',
     name: 'Diego Torres',
     handle: '@diegotorres',
-    market: 'MX',
+    market: 'US',
     platforms: ['tt', 'yt'],
     tags: ['Music', 'Dance'],
     followers: 3_400_000,
@@ -398,7 +397,7 @@ export const CREATORS: Creator[] = [
     id: 'amara',
     name: 'Amara Okafor',
     handle: '@amaraokafor',
-    market: 'UK',
+    market: 'US',
     platforms: ['ig', 'tt'],
     tags: ['Beauty', 'Fashion'],
     followers: 980_000,
@@ -413,7 +412,7 @@ export const CREATORS: Creator[] = [
     id: 'yuki',
     name: 'Yuki Tanaka',
     handle: '@yukitanaka',
-    market: 'JP',
+    market: 'US',
     platforms: ['ig', 'yt'],
     tags: ['Anime', 'Art'],
     followers: 1_100_000,
@@ -428,7 +427,7 @@ export const CREATORS: Creator[] = [
     id: 'chloe',
     name: 'Chloe Dubois',
     handle: '@chloedubois',
-    market: 'FR',
+    market: 'US',
     platforms: ['ig'],
     tags: ['Fashion', 'Beauty'],
     followers: 720_000,
@@ -443,7 +442,7 @@ export const CREATORS: Creator[] = [
     id: 'samuel',
     name: 'Samuel Adeyemi',
     handle: '@samadeyemi',
-    market: 'NG',
+    market: 'US',
     platforms: ['tt', 'ig'],
     tags: ['Comedy', 'Music'],
     followers: 2_800_000,
@@ -458,7 +457,7 @@ export const CREATORS: Creator[] = [
     id: 'elena',
     name: 'Elena Rossi',
     handle: '@elenarossi',
-    market: 'IT',
+    market: 'US',
     platforms: ['yt', 'tt'],
     tags: ['Food', 'Home'],
     followers: 640_000,
@@ -764,7 +763,7 @@ export const AUTOMATION_LOG: LogEntry[] = [
   { t: '14:58', title: 'Published', sub: '40 ads pushed live' },
   { t: '14:52', title: 'Ready for publishing', sub: '40 ads prepared and waiting' },
   { t: '14:48', title: '40 ads built', sub: 'on act_8821345607' },
-  { t: '14:02', title: 'Campaign created', sub: 'APAC · installs + purchase · $272,000' },
+  { t: '14:02', title: 'Campaign created', sub: 'US · installs + purchase · $272,000' },
 ];
 
 export const AD_ACCOUNTS: AdAccount[] = [

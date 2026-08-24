@@ -185,7 +185,7 @@ export default function AdSetupPage(): ReactNode {
               onChange={(v) => {
                 setLocal({ ...draft, market: v });
               }}
-              options={['United States', 'APAC', 'EU', 'NA', 'JP', 'SEA'].map((m) => ({
+              options={['United States'].map((m) => ({
                 value: m,
                 label: m,
               }))}
