@@ -8,6 +8,7 @@ import { SearchableSelect } from './searchable-select';
 import { copyAd, fetchAdSets } from '@/lib/client/ad/api';
 import { classifyFields } from '@/lib/client/ad/field-types';
 import type { AvailablePage, FbAd, FbAdSet, FbCampaign } from '@/lib/client/ad/types';
+import { Dropdown } from '@/components/ui/dropdown';
 
 interface Props {
   open: boolean;
@@ -188,21 +189,11 @@ export function AdCopyDrawer({ open, ad, campaigns, accountId, availablePages, o
                 )}
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="text-text-dim">新广告状态</span>
-                  <select value={statusOption} onChange={(e) => { setStatusOption(e.target.value); }}
-                    className="w-full rounded border border-border bg-bg-card px-2 py-1.5 text-xs text-text outline-none focus:border-accent">
-                    {STATUS_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Dropdown tone="legacy" aria-label="新广告状态" value={statusOption} onChange={setStatusOption} options={STATUS_OPTIONS} />
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="text-text-dim">重命名策略</span>
-                  <select value={renameStrategy} onChange={(e) => { setRenameStrategy(e.target.value); }}
-                    className="w-full rounded border border-border bg-bg-card px-2 py-1.5 text-xs text-text outline-none focus:border-accent">
-                    {RENAME_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Dropdown tone="legacy" aria-label="重命名策略" value={renameStrategy} onChange={setRenameStrategy} options={RENAME_OPTIONS} />
                 </label>
               </div>
             </div>
@@ -249,13 +240,7 @@ export function AdCopyDrawer({ open, ad, campaigns, accountId, availablePages, o
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="text-text-dim">CTA 类型</span>
-                  <select value={crCtaType} onChange={(e) => { setCrCtaType(e.target.value); }}
-                    className="w-full rounded border border-border bg-bg-card px-2 py-1.5 text-xs text-text outline-none focus:border-accent">
-                    <option value="">不覆盖</option>
-                    {CTA_OPTIONS.map((o) => (
-                      <option key={o} value={o}>{o}</option>
-                    ))}
-                  </select>
+                  <Dropdown tone="legacy" aria-label="CTA 类型" value={crCtaType} onChange={setCrCtaType} options={[{ value: '', label: '不覆盖' }, ...CTA_OPTIONS.map((o) => ({ value: o, label: o }))]} />
                 </label>
               </div>
             </div>

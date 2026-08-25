@@ -2,21 +2,137 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { Card, Dialog, Eyebrow, PageHeader, Stepper, useToast, usePaStore } from '@/components/pa';
-import { Avatar, Button, buttonClasses, DataTrust, Dropdown } from '@/components/ui';
-import type { Draft } from '@/lib/pa/types';
+import { Button, buttonClasses, Dropdown, PlatformIcon, type Platform } from '@/components/ui';
+import type { AdAccount, Draft } from '@/lib/pa/types';
+
+const MARKET_OPTIONS = [
+  { value: 'United States', label: 'United States' },
+  { value: 'United States · English audience', label: 'United States · English audience' },
+  { value: 'United States · Spanish audience', label: 'United States · Spanish audience' },
+] as const;
+
+function accountPlatform(platform: string): Platform {
+  const value = platform.toLowerCase();
+  if (value.includes('tiktok')) return 'tt';
+  if (value.includes('google') || value.includes('youtube')) return 'yt';
+  return 'ig';
+}
+
+function selectedMarkets(value: string): string[] {
+  return value
+    .split(',')
+    .map((market) => market.trim())
+    .filter(Boolean);
+}
+
+function MarketMultiSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}): ReactNode {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const selected = selectedMarkets(value);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', closeOnPointerDown);
+    document.addEventListener('keydown', closeOnKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', closeOnPointerDown);
+      document.removeEventListener('keydown', closeOnKeyDown);
+    };
+  }, [open]);
+
+  const label =
+    selected.length === 0
+      ? 'Select markets'
+      : selected.length === 1
+        ? selected[0]
+        : `${selected.length} markets selected`;
+
+  return (
+    <div ref={rootRef} className="relative w-full">
+      <button
+        type="button"
+        role="combobox"
+        aria-label="Market"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen((current) => !current);
+        }}
+        className="flex h-[var(--pa-hit-target)] w-full items-center justify-between gap-pa-3 rounded-pa-md border border-pa-border bg-pa-surface px-[14px] text-left text-pa-13 text-pa-content outline-none transition-[border-color,box-shadow] hover:border-pa-border-strong focus-visible:border-pa-ring focus-visible:shadow-[0_0_0_3px_rgba(8,145,178,0.16)]"
+      >
+        <span className={selected.length === 0 ? 'text-pa-content-placeholder' : 'truncate'}>
+          {label}
+        </span>
+        <svg
+          viewBox="0 0 10 6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          aria-hidden="true"
+          className={`h-[6px] w-[10px] shrink-0 text-pa-content-tertiary transition-transform ${open ? 'rotate-180' : ''}`}
+        >
+          <path d="M1 1l4 4 4-4" strokeLinecap="round" />
+        </svg>
+      </button>
+      {open ? (
+        <div
+          role="listbox"
+          aria-label="Markets"
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 rounded-pa-md border border-pa-border bg-pa-surface p-[4px] shadow-pa-2"
+        >
+          {MARKET_OPTIONS.map((option) => {
+            const checked = selected.includes(option.value);
+            return (
+              <label
+                key={option.value}
+                className="flex min-h-[40px] cursor-pointer items-center gap-pa-2 rounded-pa-sm px-pa-3 text-pa-13 text-pa-content-secondary transition-colors hover:bg-pa-surface-muted"
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(event) => {
+                    const next = event.target.checked
+                      ? [...selected, option.value]
+                      : selected.filter((market) => market !== option.value);
+                    onChange(next.join(', '));
+                  }}
+                  className="h-[16px] w-[16px] shrink-0 accent-pa-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pa-ring"
+                />
+                <span className={checked ? 'font-semibold text-pa-accent' : ''}>
+                  {option.label}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 /** 新草稿的默认值。与 Figma `03.1 · Create campaign — Ad setup` 一致。 */
 function blankDraft(): Draft {
   return {
-    accountId: 'act_8821345607',
+    accountId: '',
     plan: 'US · Summer partnership / installs',
     name: '',
     market: 'United States',
     productId: 'yahtzee',
-    schedule: '2026-09-01 → 2026-09-30',
+    schedule: 'manual',
     currency: 'USD',
     cap: 120_000,
     mode: 'installs',
@@ -71,7 +187,6 @@ export default function AdSetupPage(): ReactNode {
   const [draft, setLocal] = useState<Draft>(() => state.draft ?? blankDraft());
   const [nameError, setNameError] = useState<string | undefined>();
   const [accountsOpen, setAccountsOpen] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // 草稿存回 store，跨步骤（step1 → step2 → 审核）不丢。
   useEffect(() => {
@@ -84,6 +199,11 @@ export default function AdSetupPage(): ReactNode {
   function next(): void {
     if (!draft.name.trim()) {
       setNameError("Couldn't continue — give the campaign a name.");
+      return;
+    }
+    if (account === undefined) {
+      setAccountsOpen(true);
+      toast('Connect an ad account before continuing.', 'error');
       return;
     }
     setNameError(undefined);
@@ -110,35 +230,74 @@ export default function AdSetupPage(): ReactNode {
 
       <Stepper steps={['Ad setup', 'Conversion goal']} active={1} />
 
-      {/* 授权是门槛不是步骤：没有连上广告账号，整页就该不可用（CREATE-CAMPAIGN.md） */}
       <Card padded className="mb-pa-4 flex flex-wrap items-center justify-between gap-pa-3">
-        <div className="flex items-center gap-pa-3">
-          <Avatar name={account?.platform ?? 'Meta'} size="m" className="rounded-pa-md" />
-          <div>
-            <b className="text-pa-13">
-              {account?.platform} · {account?.owner}
-            </b>
-            <div className="pa-num text-pa-11 text-pa-content-tertiary">
-              {account?.id} · connected {account?.connected}
+        {account === undefined ? (
+          <div className="flex items-center gap-pa-3">
+            <span
+              className="grid h-[36px] w-[36px] place-items-center rounded-pa-md border border-dashed border-pa-border-strong bg-pa-surface-muted text-pa-content-tertiary"
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                className="h-[18px] w-[18px]"
+              >
+                <path d="M10 4v12M4 10h12" strokeLinecap="round" />
+              </svg>
+            </span>
+            <div>
+              <b className="text-pa-13">No ad account connected</b>
+              <div className="text-pa-11 text-pa-content-tertiary">
+                Choose a channel account to start building ads.
+              </div>
             </div>
           </div>
+        ) : (
+          <div className="flex items-center gap-pa-3">
+            <PlatformIcon platform={accountPlatform(account.platform)} />
+            <div>
+              <b className="text-pa-13">
+                {account.platform} · {account.owner}
+              </b>
+              <div className="pa-num text-pa-11 text-pa-content-tertiary">
+                {account.id} · connected {account.connected}
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="flex items-center gap-pa-2">
+          <Button
+            variant={account === undefined ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => {
+              setAccountsOpen(true);
+            }}
+          >
+            {account === undefined ? 'Connect account' : 'Change account'}
+          </Button>
+          {account !== undefined ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setLocal({ ...draft, accountId: '' });
+              }}
+            >
+              Disconnect
+            </Button>
+          ) : null}
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            setAccountsOpen(true);
-          }}
-        >
-          Manage accounts
-        </Button>
       </Card>
 
-      <Card padded className="mb-pa-4">
-        <Eyebrow className="mb-pa-1">① Ad plan</Eyebrow>
-        <p className="mb-pa-3 text-pa-11 text-pa-content-tertiary">
-          Pick a plan from the connected account, or create one here.
-        </p>
+      <Card padded className="mb-pa-4 border-pa-border-strong">
+        <div className="mb-pa-5 flex items-center justify-between gap-pa-3 border-b border-pa-border-subtle pb-pa-4">
+          <h2 className="text-pa-20 font-bold text-pa-content">Ads Plan</h2>
+          <span className="text-pa-11 font-semibold uppercase tracking-[0.12em] text-pa-content-tertiary">
+            Step 1
+          </span>
+        </div>
 
         <div className="grid gap-pa-4 md:grid-cols-2">
           <Field label="Campaign name" htmlFor="pa-cname" error={nameError}>
@@ -152,14 +311,6 @@ export default function AdSetupPage(): ReactNode {
               }}
             />
           </Field>
-          <Field
-            label="Objective"
-            htmlFor="pa-cobj"
-            hint="Derived from the product. Change it on step 2."
-          >
-            <input id="pa-cobj" className={INPUT_RO} value={product?.objective ?? ''} readOnly />
-          </Field>
-
           <Field
             label="Product"
             htmlFor="pa-cprod"
@@ -179,26 +330,10 @@ export default function AdSetupPage(): ReactNode {
             />
           </Field>
           <Field label="Market" htmlFor="pa-cmarket">
-            <Dropdown
-              aria-label="Market"
+            <MarketMultiSelect
               value={draft.market}
-              onChange={(v) => {
-                setLocal({ ...draft, market: v });
-              }}
-              options={['United States'].map((m) => ({
-                value: m,
-                label: m,
-              }))}
-            />
-          </Field>
-
-          <Field label="Schedule" htmlFor="pa-csched">
-            <input
-              id="pa-csched"
-              className={INPUT}
-              value={draft.schedule}
-              onChange={(event) => {
-                setLocal({ ...draft, schedule: event.target.value });
+              onChange={(market) => {
+                setLocal({ ...draft, market });
               }}
             />
           </Field>
@@ -225,47 +360,50 @@ export default function AdSetupPage(): ReactNode {
               ]}
             />
           </Field>
-          <Field label="Ad account" htmlFor="pa-cacct">
-            <input
-              id="pa-cacct"
-              className={`${INPUT_RO} pa-num`}
-              value={draft.accountId}
-              readOnly
-            />
-          </Field>
-        </div>
-
-        <p className="mt-[14px] text-pa-11 text-pa-content-tertiary">
-          Auto-filled from the selected plan. Edit any field to override.
-        </p>
-
-        <div className="mt-[14px] flex flex-wrap items-center gap-pa-3 rounded-pa-md bg-pa-surface-muted p-pa-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setAdvancedOpen(true);
-            }}
-          >
-            ▸ Advanced
-          </Button>
-          <span className="text-pa-11 text-pa-content-tertiary">
-            Pixel ID, app events, UTM parameters, exclusion lists
-          </span>
-        </div>
-
-        <div className="mt-pa-5 flex flex-wrap items-center justify-between gap-pa-3">
-          <Link href="/pa/campaigns" className={buttonClasses('secondary')}>
-            Cancel
-          </Link>
-          <Button onClick={next}>Continue to goal</Button>
         </div>
       </Card>
 
+      <Card padded className="mb-pa-5 border-pa-border-strong">
+        <details open>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-pa-3 [&::-webkit-details-marker]:hidden">
+            <h2 className="text-pa-20 font-bold text-pa-content">Advanced</h2>
+            <svg
+              viewBox="0 0 10 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+              className="h-[6px] w-[10px] text-pa-content-tertiary"
+            >
+              <path d="M1 1l4 4 4-4" strokeLinecap="round" />
+            </svg>
+          </summary>
+          <div className="mt-pa-5 grid gap-pa-4 border-t border-pa-border-subtle pt-pa-5 md:grid-cols-2">
+            <Field label="Pixel ID" htmlFor="pa-pixel">
+              <input id="pa-pixel" className={`${INPUT} pa-num`} defaultValue="px_44192083" />
+            </Field>
+            <Field label="UTM template" htmlFor="pa-utm">
+              <input
+                id="pa-utm"
+                className={`${INPUT} pa-num`}
+                defaultValue="utm_source={{platform}}&utm_campaign={{campaign_id}}"
+              />
+            </Field>
+          </div>
+        </details>
+      </Card>
+
+      <div className="mb-pa-4 flex flex-wrap items-center justify-between gap-pa-3">
+        <Link href="/pa/campaigns" className={buttonClasses('secondary')}>
+          Cancel
+        </Link>
+        <Button onClick={next}>Continue to goal</Button>
+      </div>
+
       {accountsOpen && (
         <Dialog
-          title="Connected ad accounts"
-          lede="Campaign delivery is billed to the account you pick on step 1."
+          title="Connect an ad account"
+          lede="Choose the channel account that will deliver this campaign."
           onClose={() => {
             setAccountsOpen(false);
           }}
@@ -281,56 +419,39 @@ export default function AdSetupPage(): ReactNode {
           }
         >
           <div>
-            {state.adAccounts.map((a) => (
+            {state.adAccounts.map((a: AdAccount) => (
               <div
                 key={a.id}
-                className="flex items-center justify-between border-b border-pa-border-subtle py-pa-3 last:border-b-0"
+                className="flex items-center justify-between gap-pa-3 border-b border-pa-border-subtle py-pa-3 last:border-b-0"
               >
-                <div>
-                  <b className="text-pa-13">
-                    {a.platform} · {a.owner}
-                  </b>
-                  <div className="pa-num text-pa-11 text-pa-content-tertiary">
-                    {a.id} · connected {a.connected}
+                <div className="flex min-w-0 items-center gap-pa-3">
+                  <PlatformIcon platform={accountPlatform(a.platform)} />
+                  <div className="min-w-0">
+                    <b className="block truncate text-pa-13">
+                      {a.platform} · {a.owner}
+                    </b>
+                    <div className="pa-num text-pa-11 text-pa-content-tertiary">
+                      {a.id} · connected {a.connected}
+                    </div>
                   </div>
                 </div>
-                <DataTrust state={a.state === 'ok' ? 'fresh' : 'stale'}>
-                  {a.state === 'ok' ? 'connected' : 'token expiring'}
-                </DataTrust>
+                <Button
+                  variant={draft.accountId === a.id ? 'secondary' : 'primary'}
+                  size="sm"
+                  onClick={() => {
+                    setLocal({ ...draft, accountId: a.id });
+                    setAccountsOpen(false);
+                  }}
+                >
+                  {draft.accountId === a.id
+                    ? 'Selected'
+                    : a.state === 'ok'
+                      ? 'Connect'
+                      : 'Reconnect'}
+                </Button>
               </div>
             ))}
           </div>
-        </Dialog>
-      )}
-
-      {advancedOpen && (
-        <Dialog
-          title="Advanced ad settings"
-          lede="These carry over from the connected ad account unless overridden."
-          onClose={() => {
-            setAdvancedOpen(false);
-          }}
-          footer={
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setAdvancedOpen(false);
-              }}
-            >
-              Keep settings
-            </Button>
-          }
-        >
-          <Field label="Pixel ID" htmlFor="pa-pixel">
-            <input id="pa-pixel" className={`${INPUT} pa-num`} defaultValue="px_44192083" />
-          </Field>
-          <Field label="UTM template" htmlFor="pa-utm">
-            <input
-              id="pa-utm"
-              className={`${INPUT} pa-num`}
-              defaultValue="utm_source={{platform}}&utm_campaign={{campaign_id}}"
-            />
-          </Field>
         </Dialog>
       )}
     </>

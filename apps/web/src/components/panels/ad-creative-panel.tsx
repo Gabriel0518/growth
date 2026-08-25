@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { createCreative, fetchCreatives, fetchMaterials, fetchPages } from '@/lib/client/ad/api';
 import type { AvailablePage, CreativeItem, MaterialUploadItem } from '@/lib/client/ad/types';
+import { Dropdown } from '@/components/ui/dropdown';
 
 /** 创意面板：选 Page + 选素材 → 创建 FB Creative。 */
 export function AdCreativePanel({ accountId }: { accountId: string }): React.ReactElement {
@@ -71,50 +72,11 @@ export function AdCreativePanel({ accountId }: { accountId: string }): React.Rea
       <div className="flex flex-wrap items-end gap-4 rounded-lg border border-border bg-bg-card p-4">
         <label className="flex flex-col gap-1 text-sm">
           选择 Page
-          <select
-            value={selectedPage}
-            onChange={(e) => {
-              setSelectedPage(e.target.value);
-            }}
-            className="w-[260px] rounded-md border border-border bg-bg-dark px-3 py-2 text-sm text-text outline-none focus:border-accent"
-          >
-            <option value="">-- 选择 Page --</option>
-            <optgroup label="自有">
-              {pages
-                .filter((p) => p.source === 'owned')
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-            </optgroup>
-            <optgroup label="合作方">
-              {pages
-                .filter((p) => p.source === 'partner')
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-            </optgroup>
-          </select>
+          <Dropdown tone="legacy" className="w-[260px]" aria-label="选择 Page" value={selectedPage} onChange={setSelectedPage} options={[{ value: '', label: '-- 选择 Page --' }, ...pages.filter((p) => p.source === 'owned').map((p) => ({ value: p.id, label: `自有 · ${p.name}` })), ...pages.filter((p) => p.source === 'partner').map((p) => ({ value: p.id, label: `合作方 · ${p.name}` }))]} />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           选择素材（已同步 FB 且就绪）
-          <select
-            value={selectedUpload}
-            onChange={(e) => {
-              setSelectedUpload(e.target.value);
-            }}
-            className="w-[300px] rounded-md border border-border bg-bg-dark px-3 py-2 text-sm text-text outline-none focus:border-accent"
-          >
-            <option value="">-- 选择素材 --</option>
-            {materials.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.channel_material_id}
-              </option>
-            ))}
-          </select>
+          <Dropdown tone="legacy" className="w-[300px]" aria-label="选择素材" value={selectedUpload} onChange={setSelectedUpload} options={[{ value: '', label: '-- 选择素材 --' }, ...materials.map((u) => ({ value: String(u.id), label: u.channel_material_id ?? String(u.id) }))]} />
         </label>
         <button
           type="button"

@@ -175,6 +175,22 @@
   --pa-row-h: 36px;
 }
 
+/* Legacy ad-manager controls share the same menu surface as the PA shell. */
+.unified-select {
+  min-height: var(--pa-hit-target);
+  width: 100%;
+  border-radius: 8px;
+  border-width: 1px;
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 18px;
+  outline: none;
+}
+
+.unified-select:focus {
+  box-shadow: 0 0 0 3px var(--color-accent-dim);
+}
+
 /* ===== 暗色主题（默认） ===== */
 [data-theme='dark'] {
   --color-bg-dark: #0e1018;

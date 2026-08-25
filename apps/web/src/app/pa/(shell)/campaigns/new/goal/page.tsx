@@ -191,23 +191,13 @@ export default function ConversionGoalPage(): ReactNode {
             </p>
           </div>
           <div className="grid gap-[6px]">
-            <label
-              htmlFor="pa-cdays"
-              className="text-pa-12 font-semibold text-pa-content-secondary"
-            >
-              Flight length
-            </label>
-            <input
-              id="pa-cdays"
-              type="number"
-              min="1"
-              className={INPUT}
-              value={current.days}
-              onChange={(event) => {
-                patch({ days: Number(event.target.value) || 0 });
-              }}
-            />
-            <p className="text-pa-11 text-pa-content-tertiary">Days from publish.</p>
+            <span className="text-pa-12 font-semibold text-pa-content-secondary">Delivery</span>
+            <div className={`${INPUT} flex items-center bg-pa-surface-muted text-pa-content-body`}>
+              Manual start / stop
+            </div>
+            <p className="text-pa-11 text-pa-content-tertiary">
+              Start or pause delivery from the campaign controls whenever you are ready.
+            </p>
           </div>
         </div>
 
@@ -293,11 +283,7 @@ export default function ConversionGoalPage(): ReactNode {
                     : (product?.objective ?? ''),
               },
               { label: 'Budget cap', from: '$0', to: money(current.cap) },
-              {
-                label: 'Schedule',
-                from: '—',
-                to: `${current.schedule} · ${String(current.days)} days`,
-              },
+              { label: 'Delivery', from: '—', to: 'Manual start / stop' },
             ]}
           />
           <p className="text-pa-12 text-pa-content-body">

@@ -172,7 +172,8 @@ function reducer(state: StoreState, action: PaAction): StoreState {
         installs: 0,
         cpi: 0,
         roas: 0,
-        days: draft.days || 30,
+        // 投放由用户手动启停，不再写入一个看似自动结束的默认天数。
+        days: null,
         channels: draft.channels.length > 0 ? draft.channels : ['ig', 'tt'],
         schedule: draft.schedule,
         delivering: 0,

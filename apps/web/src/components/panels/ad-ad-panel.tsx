@@ -18,6 +18,7 @@ import {
   syncAdsOnly,
 } from '@/lib/client/ad/api';
 import type { AdAccountConfig, AvailablePage, BrandedContentPermission, FbAd, FbAdSet, FbCampaign } from '@/lib/client/ad/types';
+import { Dropdown } from '@/components/ui/dropdown';
 
 
 const LS_AD_CAMPAIGN_KEY = 'ad-campaign-selected';
@@ -388,33 +389,11 @@ export function AdPanel({ accountId }: { accountId: string }): React.ReactElemen
         <div className="space-y-4">
           <label className="flex flex-col gap-1 text-sm">
             Campaign
-            <select
-              value={modalCampaignId}
-              onChange={(e) => { void handleModalCampaignChange(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent"
-            >
-              <option value="">-- 选择 Campaign --</option>
-              {campaigns.map((c) => (
-                <option key={c.local_id} value={c.local_id}>
-                  {c.name} ({c.status})
-                </option>
-              ))}
-            </select>
+            <Dropdown tone="legacy" aria-label="Campaign" value={modalCampaignId} onChange={(v) => { void handleModalCampaignChange(v); }} options={[{ value: '', label: '-- 选择 Campaign --' }, ...campaigns.map((c) => ({ value: String(c.local_id), label: `${c.name} (${c.status})` }))]} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             AdGroup
-            <select
-              value={modalAdsetId}
-              onChange={(e) => { setModalAdsetId(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent"
-            >
-              <option value="">-- 选择广告组 --</option>
-              {modalAdsetOptions.map((a) => (
-                <option key={a.local_id} value={a.local_id}>
-                  {a.name} ({a.status})
-                </option>
-              ))}
-            </select>
+            <Dropdown tone="legacy" aria-label="AdGroup" value={modalAdsetId} onChange={setModalAdsetId} options={[{ value: '', label: '-- 选择广告组 --' }, ...modalAdsetOptions.map((a) => ({ value: String(a.local_id), label: `${a.name} (${a.status})` }))]} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             广告名（素材名）
@@ -487,15 +466,7 @@ export function AdPanel({ accountId }: { accountId: string }): React.ReactElemen
           </div>
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-text-dim">优化类型（optimization_type）</span>
-            <select
-              value={optimizationType}
-              onChange={(e) => { setOptimizationType(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent"
-            >
-              <option value="NONE">NONE — 无优化（单一创意）</option>
-              <option value="REGULAR">REGULAR — 基础优化</option>
-              <option value="DEGREES_OF_FREEDOM">DEGREES_OF_FREEDOM — 动态创意优化（≥2 titles + ≥3 bodies）</option>
-            </select>
+            <Dropdown tone="legacy" aria-label="优化类型" value={optimizationType} onChange={setOptimizationType} options={[{ value: 'NONE', label: 'NONE — 无优化（单一创意）' }, { value: 'REGULAR', label: 'REGULAR — 基础优化' }, { value: 'DEGREES_OF_FREEDOM', label: 'DEGREES_OF_FREEDOM — 动态创意优化（≥2 titles + ≥3 bodies）' }]} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             落地页链接（link_url）
@@ -508,15 +479,7 @@ export function AdPanel({ accountId }: { accountId: string }): React.ReactElemen
           </label>
           <label className="flex flex-col gap-1 text-sm">
             CTA 类型
-            <select
-              value={crCtaType}
-              onChange={(e) => { setCrCtaType(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent"
-            >
-              {['SHOP_NOW', 'LEARN_MORE', 'SIGN_UP', 'SUBSCRIBE', 'DOWNLOAD', 'INSTALL_MOBILE_APP', 'CONTACT_US', 'BOOK_TRAVEL', 'APPLY_NOW', 'GET_OFFER'].map((o) => (
-                <option key={o} value={o}>{o}</option>
-              ))}
-            </select>
+            <Dropdown tone="legacy" aria-label="CTA 类型" value={crCtaType} onChange={setCrCtaType} options={['SHOP_NOW', 'LEARN_MORE', 'SIGN_UP', 'SUBSCRIBE', 'DOWNLOAD', 'INSTALL_MOBILE_APP', 'CONTACT_US', 'BOOK_TRAVEL', 'APPLY_NOW', 'GET_OFFER'].map((o) => ({ value: o, label: o }))} />
           </label>
           {/* 共创模式 */}
           {(() => {
@@ -525,15 +488,7 @@ export function AdPanel({ accountId }: { accountId: string }): React.ReactElemen
             return hasIg ? (
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-text-dim">共创模式</span>
-                <select
-                  value={partnershipMode}
-                  onChange={(e) => { setPartnershipMode(e.target.value as 'brand_only' | 'brand_creator' | 'creator_primary'); }}
-                  className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent"
-                >
-                  <option value="brand_only">品牌方（普通广告）</option>
-                  <option value="brand_creator">品牌方 + 创作者（共创广告 — 品牌做主身份）</option>
-                  <option value="creator_primary">创作者（共创广告 — 创作者做主身份）</option>
-                </select>
+                <Dropdown tone="legacy" aria-label="共创模式" value={partnershipMode} onChange={(v) => { setPartnershipMode(v as 'brand_only' | 'brand_creator' | 'creator_primary'); }} options={[{ value: 'brand_only', label: '品牌方（普通广告）' }, { value: 'brand_creator', label: '品牌方 + 创作者（共创广告 — 品牌做主身份）' }, { value: 'creator_primary', label: '创作者（共创广告 — 创作者做主身份）' }]} />
               </label>
             ) : null;
           })()}

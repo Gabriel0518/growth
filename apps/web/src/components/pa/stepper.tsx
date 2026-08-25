@@ -5,14 +5,14 @@ import { cn } from '@/components/ui';
 /** 创建向导的两步指示器。已完成的步骤打勾，不再显示序号。 */
 export function Stepper({ steps, active }: { steps: string[]; active: number }): ReactNode {
   return (
-    <div className="mb-pa-5 flex items-center gap-[14px] rounded-pa-lg border border-pa-border bg-pa-surface p-pa-4">
+    <div className="mb-pa-5 flex items-center gap-[12px] rounded-pa-lg border border-pa-border bg-pa-surface px-pa-4 py-[12px]">
       {steps.map((label, index) => {
         const n = index + 1;
         const done = n < active;
         const current = n === active;
         return (
-          <div key={label} className="flex flex-1 items-center gap-[14px]">
-            {index > 0 && <span className="h-px flex-1 bg-pa-border" />}
+          <div key={label} className="flex shrink-0 items-center gap-[10px]">
+            {index > 0 && <span className="h-px w-[clamp(42px,8vw,96px)] bg-pa-border" />}
             <span
               className={cn(
                 'flex items-center gap-[10px] text-pa-13',
