@@ -558,7 +558,12 @@ export default function CampaignDetailPage(): ReactNode {
                   label={
                     <span className="flex w-full items-center justify-between gap-pa-3">
                       <span className="flex min-w-0 items-center gap-pa-2">
-                        <Avatar name={creator.name} hue={creator.hue} size="m" />
+                        <Avatar
+                          name={creator.name}
+                          src={creator.avatar}
+                          hue={creator.hue}
+                          size="m"
+                        />
                         <span className="min-w-0">
                           <b className="block truncate text-pa-13">{creator.name}</b>
                           <span className="block truncate font-pa-mono text-pa-11 text-pa-content-tertiary">

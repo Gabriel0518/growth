@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 
 import {
-  AreaChart,
   CampaignCard,
   Card,
   CardHead,
@@ -13,6 +12,7 @@ import {
   Eyebrow,
   PageHeader,
   Sparkline,
+  TrendChart,
   usePaStore,
 } from '@/components/pa';
 import { Button, buttonClasses, Dropdown, MetricCard, Segment } from '@/components/ui';
@@ -20,23 +20,57 @@ import { activeCampaigns, totals } from '@/lib/pa/derive';
 import { compact, int, money, roas } from '@/lib/pa/format';
 import type { CampaignStatus } from '@/lib/pa/types';
 
-/** 演示用的走势序列。接后端后由 DemoOverview.trend 提供。 */
-const SPARKS = {
-  active: [8, 11, 9, 14, 13, 18, 17, 22],
-  partners: [30, 34, 33, 41, 47, 52, 58, 64],
-  reach: [12, 18, 22, 19, 28, 34, 41, 48],
-  roas: [3.1, 3.4, 3.3, 3.9, 4.2, 4.5, 4.6, 4.8],
-};
-const TREND: Record<string, number[]> = {
-  '7D': [4.31, 4.28, 4.42, 4.51, 4.6, 4.72, 4.82],
-  '30D': [3.55, 3.62, 3.71, 3.8, 3.95, 4.02, 4.18, 4.3, 4.41, 4.52, 4.63, 4.7, 4.76, 4.82],
-  '90D': [2.6, 2.9, 3.05, 3.2, 3.35, 3.5, 3.62, 3.8, 3.98, 4.15, 4.3, 4.48, 4.62, 4.82],
-};
-const AXES: Record<string, string[]> = {
-  '7D': ['Aug 12', 'Aug 14', 'Aug 16', 'Aug 18'],
-  '30D': ['Jul 20', 'Jul 27', 'Aug 03', 'Aug 10', 'Aug 18'],
-  '90D': ['May 20', 'Jun 15', 'Jul 10', 'Aug 18'],
-};
+type MomentumMetric = 'ROAS' | 'Reach' | 'Impressions' | 'Clicks' | 'Views' | 'Installs' | 'Spend';
+
+const RANGE_DAYS: Record<string, number> = { '7D': 7, '30D': 30, '90D': 90 };
+
+function sampleEvenly<T>(values: T[], count: number): T[] {
+  if (values.length <= count) return values;
+  return Array.from({ length: count }, (_, index) => {
+    const sourceIndex = Math.round((index / Math.max(count - 1, 1)) * (values.length - 1));
+    return values[sourceIndex] as T;
+  });
+}
+
+function dailySeries(base: number, change: number, count: number): number[] {
+  const safeBase = Math.max(base, 1);
+  const start = safeBase / (1 + change);
+  return Array.from({ length: count }, (_, index) => {
+    const progress = count === 1 ? 1 : index / (count - 1);
+    const wave = Math.sin(index * 1.7) * 0.035;
+    return Math.max(0, start * (1 + (change + wave) * progress));
+  });
+}
+
+function dateLabels(range: string, count: number): string[] {
+  const days = RANGE_DAYS[range] ?? 30;
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+  return Array.from({ length: count }, (_, index) => {
+    const elapsed = Math.round((index / Math.max(count - 1, 1)) * (days - 1));
+    const date = new Date(now);
+    date.setDate(now.getDate() - (days - 1 - elapsed));
+    return formatter.format(date);
+  });
+}
+
+function trendColor(metric: MomentumMetric): string {
+  return metric === 'ROAS'
+    ? 'var(--color-pa-chart-3)'
+    : metric === 'Reach' || metric === 'Impressions'
+      ? 'var(--color-pa-chart-1)'
+      : metric === 'Spend'
+        ? 'var(--color-pa-accent)'
+        : 'var(--color-pa-chart-2)';
+}
+
+function formatMetric(metric: MomentumMetric, value: number): string {
+  return metric === 'ROAS'
+    ? `${value.toFixed(2)}×`
+    : metric === 'Spend'
+      ? money(value)
+      : compact(value);
+}
 
 /** 渠道构成。⚠️ 槽位 3–5 白底 <3:1，每行必须直接标注，不能只靠颜色图例。 */
 const MIX = [
@@ -56,21 +90,116 @@ const STATUS_OPTIONS = [
 
 export default function OverviewPage(): ReactNode {
   const { state } = usePaStore();
-  const [metric, setMetric] = useState('ROAS');
+  const [metric, setMetric] = useState<MomentumMetric>('ROAS');
   const [range, setRange] = useState('30D');
   const [status, setStatus] = useState('all');
 
   const t = totals(state);
   const active = activeCampaigns(state.campaigns);
+  const deliveryTotals = state.delivery.reduce(
+    (acc, delivery) => ({
+      clicks: acc.clicks + delivery.clicks,
+      views: acc.views + delivery.views,
+    }),
+    { clicks: 0, views: 0 },
+  );
   const shown = state.campaigns
     .filter((c) => (status === 'all' ? true : c.status === (status as CampaignStatus)))
     .slice(0, 6);
 
-  const trend = TREND[range] ?? [];
-  const axis = AXES[range] ?? [];
   const deliveryCreators = [...new Set(state.delivery.map((d) => d.creatorId))];
-  const headline =
-    metric === 'ROAS' ? roas(t.roas) : metric === 'Reach' ? compact(t.audience) : money(t.spend);
+  const metricValue: Record<MomentumMetric, number> = {
+    ROAS: t.roas,
+    Reach: t.audience,
+    Impressions: t.impressions,
+    Clicks: deliveryTotals.clicks,
+    Views: deliveryTotals.views,
+    Installs: t.installs,
+    Spend: t.spend,
+  };
+  const metricChange: Record<MomentumMetric, number> = {
+    ROAS: 0.106,
+    Reach: 0.181,
+    Impressions: 0.164,
+    Clicks: 0.124,
+    Views: 0.142,
+    Installs: 0.096,
+    Spend: 0.082,
+  };
+  const count = RANGE_DAYS[range] ?? 30;
+  const trend = dailySeries(metricValue[metric], metricChange[metric], count);
+  const axis = dateLabels(range, count);
+  const displayCount = count <= 7 ? 7 : 10;
+  const displayTrend = sampleEvenly(trend, displayCount);
+  const displayAxis = sampleEvenly(axis, displayCount);
+  const headline = formatMetric(metric, metricValue[metric]);
+  const headlineChange = `+ ${(metricChange[metric] * 100).toFixed(1)}% vs previous period`;
+
+  const metricCards = [
+    {
+      label: 'Active campaigns',
+      value: int(active.length),
+      sub: '+ 4.1% day over day',
+      points: dailySeries(active.length, 0.041, 8),
+      color: 'var(--color-pa-accent)',
+    },
+    {
+      label: 'KOL partners',
+      value: int(1284),
+      sub: '+ 12.4% day over day',
+      points: dailySeries(1284, 0.124, 8),
+      color: 'var(--color-pa-chart-1)',
+    },
+    {
+      label: 'Total reach',
+      value: compact(t.audience),
+      sub: '+ 18.1% day over day',
+      points: dailySeries(t.audience, 0.181, 8),
+      color: 'var(--color-pa-chart-2)',
+    },
+    {
+      label: 'Blended ROAS',
+      value: roas(t.roas),
+      sub: '+ 10.6% day over day',
+      points: dailySeries(t.roas, 0.106, 8),
+      color: 'var(--color-pa-chart-3)',
+    },
+    {
+      label: 'Impressions',
+      value: compact(t.impressions),
+      sub: '+ 16.4% day over day',
+      points: dailySeries(t.impressions, 0.164, 8),
+      color: 'var(--color-pa-chart-1)',
+    },
+    {
+      label: 'Total clicks',
+      value: compact(deliveryTotals.clicks),
+      sub: '+ 12.4% day over day',
+      points: dailySeries(deliveryTotals.clicks, 0.124, 8),
+      color: 'var(--color-pa-chart-2)',
+    },
+    {
+      label: 'Video views',
+      value: compact(deliveryTotals.views),
+      sub: '+ 14.2% day over day',
+      points: dailySeries(deliveryTotals.views, 0.142, 8),
+      color: 'var(--color-pa-chart-4)',
+    },
+    {
+      label: 'Installs',
+      value: compact(t.installs),
+      sub: '+ 9.6% day over day',
+      points: dailySeries(t.installs, 0.096, 8),
+      color: 'var(--color-pa-chart-3)',
+    },
+    {
+      label: 'Ad spend',
+      value: money(t.spend),
+      sub: '+ 8.2% day over day',
+      points: dailySeries(t.spend, 0.082, 8),
+      color: 'var(--color-pa-accent)',
+    },
+  ];
 
   return (
     <>
@@ -99,35 +228,23 @@ export default function OverviewPage(): ReactNode {
         }
       />
 
-      <div className="mb-pa-4 grid grid-cols-[repeat(auto-fill,minmax(232px,1fr))] gap-pa-3">
-        <MetricCard
-          label="Active campaigns"
-          value={int(active.length)}
-          sub="+ 4 this month"
-          trust={{ state: 'fresh', text: `fresh · ${state.lastSync}` }}
-          aside={<Sparkline points={SPARKS.active} color="var(--color-pa-accent)" />}
-        />
-        <MetricCard
-          label="KOL partners"
-          value={int(1284)}
-          sub="+ 12.4%"
-          trust={{ state: 'fresh', text: `fresh · ${state.lastSync}` }}
-          aside={<Sparkline points={SPARKS.partners} color="var(--color-pa-chart-1)" />}
-        />
-        <MetricCard
-          label="Total reach"
-          value={compact(t.audience)}
-          sub="+ 18.1%"
-          trust={{ state: 'fresh', text: `fresh · ${state.lastSync}` }}
-          aside={<Sparkline points={SPARKS.reach} color="var(--color-pa-chart-2)" />}
-        />
-        <MetricCard
-          label="Blended ROAS"
-          value={roas(t.roas)}
-          sub="+ 0.46 vs prior"
-          trust={{ state: 'fresh', text: `fresh · ${state.lastSync}` }}
-          aside={<Sparkline points={SPARKS.roas} color="var(--color-pa-chart-3)" />}
-        />
+      <div
+        className="-mx-pa-1 mb-pa-4 overflow-x-auto px-pa-1 pb-pa-2"
+        aria-label="Overview metrics"
+      >
+        <div className="flex min-w-max snap-x gap-pa-3">
+          {metricCards.map((card) => (
+            <MetricCard
+              key={card.label}
+              label={card.label}
+              value={card.value}
+              sub={card.sub}
+              className="w-[244px] shrink-0 snap-start"
+              trust={{ state: 'fresh', text: `fresh · ${state.lastSync}` }}
+              aside={<Sparkline points={card.points} color={card.color} width={94} height={28} />}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="mb-pa-6 grid gap-pa-3 xl:grid-cols-[minmax(0,2.3fr)_minmax(0,1fr)]">
@@ -137,16 +254,24 @@ export default function OverviewPage(): ReactNode {
             sub="Attributed performance across all active channels"
             aside={
               <div className="flex flex-wrap gap-pa-2">
-                <Segment
-                  aria-label="Metric"
-                  value={metric}
-                  onChange={setMetric}
-                  items={[
-                    { value: 'ROAS', label: 'ROAS' },
-                    { value: 'Reach', label: 'Reach' },
-                    { value: 'Spend', label: 'Spend' },
-                  ]}
-                />
+                <div className="w-[150px]">
+                  <Dropdown
+                    aria-label="Trend metric"
+                    value={metric}
+                    onChange={(value) => {
+                      setMetric(value as MomentumMetric);
+                    }}
+                    options={[
+                      { value: 'ROAS', label: 'ROAS' },
+                      { value: 'Reach', label: 'Reach' },
+                      { value: 'Impressions', label: 'Impressions' },
+                      { value: 'Clicks', label: 'Total clicks' },
+                      { value: 'Views', label: 'Video views' },
+                      { value: 'Installs', label: 'Installs' },
+                      { value: 'Spend', label: 'Ad spend' },
+                    ]}
+                  />
+                </div>
                 <Segment
                   aria-label="Range"
                   value={range}
@@ -163,15 +288,18 @@ export default function OverviewPage(): ReactNode {
           <div className="p-pa-4">
             <div className="flex flex-wrap items-baseline gap-[10px]">
               <b className="pa-num text-[21px] leading-[28px]">{headline}</b>
-              <span className="pa-num text-pa-11 text-pa-positive">+ 10.6% vs previous period</span>
+              <span className="pa-num text-pa-11 text-pa-positive">{headlineChange}</span>
             </div>
             <div className="mt-pa-4">
-              <AreaChart points={trend} label={`${metric} trend`} />
-            </div>
-            <div className="mt-pa-2 flex justify-between font-pa-mono text-pa-11 text-pa-content-tertiary">
-              {axis.map((a) => (
-                <span key={a}>{a}</span>
-              ))}
+              <TrendChart
+                points={displayTrend}
+                labels={displayAxis}
+                dailyPoints={trend}
+                dailyLabels={axis}
+                label={`${metric} trend over ${range}`}
+                color={trendColor(metric)}
+                valueFormatter={(value) => formatMetric(metric, value)}
+              />
             </div>
           </div>
         </Card>
@@ -215,7 +343,7 @@ export default function OverviewPage(): ReactNode {
         </div>
         <div className="flex items-center gap-pa-3">
           <span className="pa-num text-pa-11 text-pa-content-tertiary">
-            {deliveryCreators.length} active partners
+            {deliveryCreators.length} active creators
           </span>
           <Link href="/pa/kols" className={buttonClasses('secondary', 'sm')}>
             View network
@@ -223,7 +351,7 @@ export default function OverviewPage(): ReactNode {
         </div>
       </div>
       <div className="mb-pa-6 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-pa-3">
-        {deliveryCreators.slice(0, 4).map((id) => {
+        {deliveryCreators.slice(0, 8).map((id) => {
           const creator = state.creators.find((c) => c.id === id);
           const delivery = state.delivery.find((d) => d.creatorId === id);
           if (!creator || !delivery) return null;

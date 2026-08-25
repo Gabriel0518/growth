@@ -95,7 +95,7 @@ export default function CreatorProfilePage(): ReactNode {
 
       <Card padded className="mb-pa-4">
         <div className="flex flex-wrap items-center gap-pa-4">
-          <Avatar name={creator.name} hue={creator.hue} size="l" />
+          <Avatar name={creator.name} src={creator.avatar} hue={creator.hue} size="l" />
           <div className="min-w-0 flex-1">
             <b className="text-pa-17">{creator.name}</b>
             <div className="font-pa-mono text-pa-12 text-pa-content-tertiary">{creator.handle}</div>
@@ -112,6 +112,16 @@ export default function CreatorProfilePage(): ReactNode {
                 </span>
               ))}
             </div>
+            {creator.profileUrl === undefined ? null : (
+              <a
+                href={creator.profileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-pa-2 inline-block text-pa-11 text-pa-accent hover:underline"
+              >
+                Open public profile ↗
+              </a>
+            )}
           </div>
           {/* 账号级授权是 KOL 的属性，不进单条广告的状态链（CAMPAIGN-LIVE.md） */}
           <DataTrust state={creator.authorized ? 'fresh' : 'partial'}>

@@ -190,7 +190,7 @@ export default function KolNetworkPage(): ReactNode {
                     <Td>
                       <Link href={`/pa/kols/${c.id}`} className="hover:underline">
                         <CellStack
-                          media={<Avatar name={c.name} hue={c.hue} size="s" />}
+                          media={<Avatar name={c.name} src={c.avatar} hue={c.hue} size="s" />}
                           title={c.name}
                           sub={c.handle}
                         />
@@ -266,7 +266,7 @@ function GridCard({
     <div className="overflow-hidden rounded-pa-lg border border-pa-border bg-pa-surface hover:border-pa-border-strong hover:shadow-pa-1">
       <div className="flex items-center gap-[10px] p-[14px]">
         <Checkbox checked={checked} onChange={onToggle} className="min-h-0" />
-        <Avatar name={creator.name} hue={creator.hue} size="m" />
+        <Avatar name={creator.name} src={creator.avatar} hue={creator.hue} size="m" />
         <Link href={`/pa/kols/${creator.id}`} className="min-w-0 flex-1 hover:underline">
           <b className="block truncate text-pa-13">{creator.name}</b>
           <span className="block truncate font-pa-mono text-pa-11 text-pa-content-tertiary">

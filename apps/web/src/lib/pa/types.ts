@@ -83,6 +83,10 @@ export interface Creator {
   avgViews: number;
   /** 头像色相。真实头像接入后由 Avatar 的 src 覆盖。 */
   hue: number;
+  /** 本地缓存的公开头像，避免首屏依赖第三方图片服务。 */
+  avatar?: string;
+  /** 公开社交主页，用于卡片和详情页的跳转。 */
+  profileUrl?: string;
   /** 后端有：branded content 授权名单。 */
   authorized: boolean;
 }

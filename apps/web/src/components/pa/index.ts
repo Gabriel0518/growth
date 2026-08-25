@@ -6,7 +6,7 @@ export { AssetCard } from './asset-card';
 export { Banner, type BannerTone } from './banner';
 export { CampaignCard } from './campaign-card';
 export { Card, CardHead } from './card';
-export { AreaChart, Sparkline } from './charts';
+export { AreaChart, Sparkline, TrendChart } from './charts';
 export { CreatorCard } from './creator-card';
 export { CellStack, type Column, Table, TableCard, TableHead, TableScroll, Td } from './data-table';
 export { DeltaList, Dialog } from './dialog';
