@@ -22,7 +22,7 @@ export function Track({
     >
       <i
         className={cn(
-          'block h-full',
+          'pa-progress-fill block h-full',
           tone === 'positive' && 'bg-pa-positive',
           tone === 'negative' && 'bg-pa-negative',
           tone === 'accent' && 'bg-pa-accent',

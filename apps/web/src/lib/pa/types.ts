@@ -18,11 +18,14 @@
 export type CampaignStatus = 'running' | 'review' | 'draft' | 'stopped' | 'automating' | 'ready';
 
 /** 单条广告的三段状态链（CAMPAIGN-LIVE.md，从 9 态砍到 3 段）。 */
-export type DeliveryState = 'live' | 'preparing' | 'rejected';
+export type DeliveryState = 'live' | 'preparing' | 'paused' | 'rejected';
 
 export type AssetStatus = 'ready' | 'generating' | 'review' | 'failed';
 
 export type PlatformKey = 'ig' | 'tt' | 'yt';
+
+/** Step 2 的优化目标。每个目标都和预算上限一起配置。 */
+export type ConversionGoal = 'installs' | 'purchases' | 'signups' | 'leads' | 'roas' | 'cpm';
 
 export interface Product {
   id: string;
@@ -43,6 +46,8 @@ export interface Campaign {
   status: CampaignStatus;
   /** 后端有：来自 campaigns[].creators */
   kols: number;
+  /** 新建 campaign 的目标创作者数；存量 mock campaign 没有也可以正常展示。 */
+  targetKols?: number;
   spend: number;
   impressions: number;
   installs: number;
@@ -85,6 +90,8 @@ export interface Creator {
   hue: number;
   /** 本地缓存的公开头像，避免首屏依赖第三方图片服务。 */
   avatar?: string;
+  /** 本地缓存的公开视频封面，用于 KOL network 的内容预览。 */
+  videoCovers?: string[];
   /** 公开社交主页，用于卡片和详情页的跳转。 */
   profileUrl?: string;
   /** 后端有：branded content 授权名单。 */
@@ -106,6 +113,9 @@ export interface Delivery {
   state: DeliveryState;
   views: number;
   cpi: number;
+  matchedAt?: number;
+  publishedAt?: number;
+  closedAt?: number;
 }
 
 export interface HistoryEntry {
@@ -132,6 +142,10 @@ export interface Asset {
   campaignId: string;
   error?: string;
   perf?: { impressions: number; ctr: number; roas: number; campaigns: number };
+  /** Local creator cover used as a believable AI-video thumbnail. */
+  cover?: string;
+  approvedAt?: number;
+  retryCount?: number;
 }
 
 export interface LogEntry {
@@ -159,8 +173,9 @@ export interface Draft {
   schedule: string;
   currency: string;
   cap: number;
-  mode: 'installs' | 'roas';
+  mode: ConversionGoal;
   targetRoas: number;
+  targetCpm: number;
   kolTarget: number;
   channels: PlatformKey[];
   days: number;

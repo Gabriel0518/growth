@@ -5,16 +5,15 @@ import { Track } from './track';
 
 import { Avatar, PlatformIcon } from '@/components/ui';
 import { compact, money, roas } from '@/lib/pa/format';
-import type { Campaign, Creator, Delivery } from '@/lib/pa/types';
+import type { Creator, Delivery } from '@/lib/pa/types';
 
 interface CreatorCardProps {
   creator: Creator;
   delivery: Delivery;
-  campaign: Campaign | undefined;
 }
 
 /** Overview 上的合作创作者卡片：身份 + 三个指标 + 投放进度 + 标签 + ROAS。 */
-export function CreatorCard({ creator, delivery, campaign }: CreatorCardProps): ReactNode {
+export function CreatorCard({ creator, delivery }: CreatorCardProps): ReactNode {
   return (
     <div className="rounded-pa-lg border border-pa-border bg-pa-surface transition-[border-color,box-shadow] duration-[120ms] hover:border-pa-border-strong hover:shadow-pa-1">
       <Link
@@ -73,11 +72,6 @@ export function CreatorCard({ creator, delivery, campaign }: CreatorCardProps): 
           </span>
         </div>
 
-        {campaign === undefined ? null : (
-          <div className="mt-[10px] truncate text-pa-11 text-pa-content-tertiary">
-            on {campaign.name} / {campaign.market}
-          </div>
-        )}
       </Link>
       {creator.profileUrl === undefined ? null : (
         <a

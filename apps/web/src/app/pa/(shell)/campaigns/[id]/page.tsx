@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useParams } from 'next/navigation';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import {
   Banner,
@@ -32,7 +32,7 @@ import {
 } from '@/components/ui';
 import { campaignLabel, compact, cpi, int, money, moneyK, pacing, roas } from '@/lib/pa/format';
 import { STATUS_LABEL, STATUS_TONE_OF } from '@/lib/pa/status';
-import type { CampaignStatus, DeliveryState } from '@/lib/pa/types';
+import type { CampaignStatus } from '@/lib/pa/types';
 
 /** 每个状态的眉标与导语。用户是**监督者**不是操作者，导语要回答「现在该关心什么」。 */
 const COPY: Record<CampaignStatus, { eyebrow: string; lede: string }> = {
@@ -62,34 +62,48 @@ const COPY: Record<CampaignStatus, { eyebrow: string; lede: string }> = {
   },
 };
 
-/** 排序权重：失败最前、待处理次之、正常最后。异常必须一眼可见。 */
-function severity(state: DeliveryState): number {
-  return state === 'rejected' ? 0 : state === 'preparing' ? 1 : 2;
-}
-
 export default function CampaignDetailPage(): ReactNode {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const { state, dispatch } = usePaStore();
   const toast = useToast();
   const [confirm, setConfirm] = useState<'pause' | 'resume' | 'publish' | null>(null);
   const [reasonOpen, setReasonOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
+  const [workPage, setWorkPage] = useState(0);
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
+  const WORK_PAGE_SIZE = 20;
 
   const campaign = state.campaigns.find((c) => c.id === params.id);
   const product = state.products.find((p) => p.id === campaign?.productId);
 
-  /**
-   * ⚠️ 失败行**默认排最前**。异常埋在 42 行里等于没报 ——
-   * 全自动系统的价值不是「让你看它跑」，而是出问题时立刻告诉你（CAMPAIGN-LIVE.md）。
-   */
+  useEffect(() => {
+    if (!campaign || campaign.status !== 'running') return;
+
+    const run = () => {
+      dispatch({ type: 'advanceAutomation', campaignId: campaign.id });
+    };
+    const initial = window.setTimeout(run, 650);
+    const timer = window.setInterval(run, 2200);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+    };
+  }, [campaign?.id, campaign?.status, dispatch]);
+
   const work = useMemo(() => {
     if (!campaign) return [];
     return state.delivery
       .filter((d) => d.campaignId === campaign.id)
-      .sort((a, b) => severity(a.state) - severity(b.state));
+      .sort((a, b) => (b.matchedAt ?? -1) - (a.matchedAt ?? -1));
   }, [state.delivery, campaign]);
+
+  const pageCount = Math.max(1, Math.ceil(work.length / WORK_PAGE_SIZE));
+  const visibleWork = work.slice(workPage * WORK_PAGE_SIZE, (workPage + 1) * WORK_PAGE_SIZE);
+
+  useEffect(() => {
+    setWorkPage((page) => Math.min(page, pageCount - 1));
+  }, [pageCount]);
 
   if (!campaign || !product) {
     return (
@@ -112,64 +126,113 @@ export default function CampaignDetailPage(): ReactNode {
   const rejected = work.filter((w) => w.state === 'rejected');
   const live = campaign.status === 'running';
   const building = campaign.status === 'automating' || campaign.status === 'ready';
-  const log = state.automationLog
-    .filter((l) => l.campaignId === undefined || l.campaignId === campaign.id)
-    .slice(0, 8);
+  const campaignAssets = state.assets.filter((asset) => asset.campaignId === campaign.id);
+  const generatingAssets = campaignAssets.filter((asset) => asset.status === 'generating');
+  const clearedAssets = campaignAssets.filter(
+    (asset) => asset.status === 'ready' && asset.origin === 'ai',
+  );
+  const log = state.automationLog.filter(
+    (l) => l.campaignId === undefined || l.campaignId === campaign.id,
+  );
 
   /**
    * 顶部状态带：前两个状态显示**构建进度**，后两个显示**投放结果** ——
    * 不同阶段问的问题不一样，不套同一个模板（CAMPAIGN-LIVE.md）。
    */
-  const stages = building
+  const stages = campaign.isNew
     ? [
-        { label: 'Matched', value: int(campaign.kols), sub: 'creators accepted', pct: 100 },
         {
-          label: 'Creative',
-          value: int(Math.round(campaign.kols * 0.7)),
-          sub: 'variants rendered',
-          pct: campaign.status === 'ready' ? 100 : 62,
+          label: 'Matched',
+          value: int(campaign.kols),
+          sub: `${int(campaign.targetKols ?? campaign.kols)} target creators`,
+          pct: Math.min(
+            100,
+            (campaign.kols / Math.max(1, campaign.targetKols ?? campaign.kols)) * 100,
+          ),
         },
         {
-          label: 'Ads built',
-          value: int(Math.round(campaign.kols * 0.5)),
-          sub: `on ${state.adAccounts[0]?.id ?? ''}`,
-          pct: campaign.status === 'ready' ? 100 : 34,
+          label: 'Creative',
+          value: int(campaignAssets.length),
+          sub: `${generatingAssets.length} rendering automatically`,
+          pct: Math.min(100, (campaignAssets.length / Math.max(1, campaign.kols)) * 100),
+        },
+        {
+          label: 'Approved',
+          value: int(clearedAssets.length),
+          sub: 'videos auto-cleared',
+          pct: Math.min(100, (clearedAssets.length / Math.max(1, campaign.kols)) * 100),
         },
         {
           label: 'Live',
-          value: campaign.status === 'ready' ? '0' : '—',
-          sub: campaign.status === 'ready' ? 'waiting to publish' : 'not started',
-          pct: 0,
+          value: int(campaign.delivering),
+          sub: 'creator posts delivering',
+          pct: Math.min(100, (campaign.delivering / Math.max(1, campaign.kols)) * 100),
         },
       ]
-    : [
-        {
-          label: 'Spend',
-          value: money(campaign.spend),
-          sub: `${String(pace)}% of ${money(campaign.cap)}`,
-          pct: pace,
-        },
-        {
-          label: 'Impressions',
-          value: compact(campaign.impressions),
-          sub: 'of 15.0M target',
-          pct: Math.min(100, (campaign.impressions / 15_000_000) * 100),
-        },
-        {
-          label: 'Installs',
-          value: int(campaign.installs),
-          sub: `${cpi(campaign.cpi)} blended CPI`,
-          pct: 72,
-        },
-        {
-          label: 'ROAS',
-          value: roas(campaign.roas),
-          sub: 'target 4.80×',
-          pct: Math.min(100, (campaign.roas / 4.8) * 100),
-        },
-      ];
+    : building
+      ? [
+          { label: 'Matched', value: int(campaign.kols), sub: 'creators accepted', pct: 100 },
+          {
+            label: 'Creative',
+            value: int(Math.round(campaign.kols * 0.7)),
+            sub: 'variants rendered',
+            pct: campaign.status === 'ready' ? 100 : 62,
+          },
+          {
+            label: 'Ads built',
+            value: int(Math.round(campaign.kols * 0.5)),
+            sub: `on ${state.adAccounts[0]?.id ?? ''}`,
+            pct: campaign.status === 'ready' ? 100 : 34,
+          },
+          {
+            label: 'Live',
+            value: campaign.status === 'ready' ? '0' : '—',
+            sub: campaign.status === 'ready' ? 'waiting to publish' : 'not started',
+            pct: 0,
+          },
+        ]
+      : [
+          {
+            label: 'Spend',
+            value: money(campaign.spend),
+            sub: `${String(pace)}% of ${money(campaign.cap)}`,
+            pct: pace,
+          },
+          {
+            label: 'Impressions',
+            value: compact(campaign.impressions),
+            sub: 'of 15.0M target',
+            pct: Math.min(100, (campaign.impressions / 15_000_000) * 100),
+          },
+          {
+            label: 'Installs',
+            value: int(campaign.installs),
+            sub: `${cpi(campaign.cpi)} blended CPI`,
+            pct: 72,
+          },
+          {
+            label: 'ROAS',
+            value: roas(campaign.roas),
+            sub: 'target 4.80×',
+            pct: Math.min(100, (campaign.roas / 4.8) * 100),
+          },
+        ];
 
   const pool = state.creators.filter((c) => !work.some((w) => w.creatorId === c.id));
+  const selectedDelivery =
+    selectedCreatorId === null
+      ? undefined
+      : work.find((item) => item.creatorId === selectedCreatorId);
+  const selectedCreator =
+    selectedCreatorId === null
+      ? undefined
+      : state.creators.find((item) => item.id === selectedCreatorId);
+  const selectedAsset =
+    selectedCreatorId === null
+      ? undefined
+      : campaignAssets.find(
+          (asset) => asset.creatorId === selectedCreatorId && asset.origin === 'ai',
+        );
 
   return (
     <>
@@ -178,7 +241,10 @@ export default function CampaignDetailPage(): ReactNode {
         title={campaignLabel(campaign)}
         lede={copy.lede}
         badge={
-          <StatusPill tone={STATUS_TONE_OF(campaign.status)}>
+          <StatusPill
+            tone={STATUS_TONE_OF(campaign.status)}
+            {...(live ? { className: 'pa-live-pulse' } : {})}
+          >
             {STATUS_LABEL[campaign.status]}
           </StatusPill>
         }
@@ -235,37 +301,62 @@ export default function CampaignDetailPage(): ReactNode {
       />
 
       <Card padded className="mb-pa-4">
-        <div className="flex flex-wrap items-stretch gap-pa-5">
-          <div className="flex min-w-[270px] flex-nowrap items-center gap-pa-3">
-            <ProductIcon product={product} size={60} />
-            <div>
-              <Eyebrow>Product</Eyebrow>
-              <b className="mt-px block text-pa-17">{product.name}</b>
-              <div className="text-pa-11 text-pa-content-tertiary">
-                {product.category} · {product.platforms}
+        <div className="grid gap-pa-6 xl:grid-cols-[minmax(280px,1.05fr)_minmax(0,1.95fr)]">
+          <div className="min-w-0">
+            <Eyebrow className="font-semibold text-pa-accent">Product</Eyebrow>
+            <div className="mt-pa-3 flex min-w-0 items-center gap-pa-4">
+              <ProductIcon product={product} size={64} className="shadow-pa-1" />
+              <div className="min-w-0">
+                <h2 className="text-pa-20 font-semibold leading-tight text-pa-content">
+                  {product.name}
+                </h2>
+                <p className="mt-pa-1 text-pa-12 leading-4 text-pa-content-secondary">
+                  {product.category} <span className="text-pa-content-placeholder">·</span>{' '}
+                  {product.platforms}
+                </p>
+                <p className="pa-num mt-pa-1 truncate text-pa-11 text-pa-accent">{product.store}</p>
               </div>
-              <div className="pa-num text-pa-11 text-pa-accent">{product.store}</div>
             </div>
           </div>
-          <div className="hidden w-px bg-pa-border lg:block" />
-          <div className="grid flex-1 grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-pa-5">
-            <div>
-              <Eyebrow>Objective</Eyebrow>
-              <b className="text-pa-13">{product.objective}</b>
+
+          <div className="border-t border-pa-border-subtle pt-pa-5 xl:border-l xl:border-t-0 xl:pl-pa-6 xl:pt-0">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-pa-3 gap-y-pa-1">
+              <h2 className="text-pa-15 font-semibold text-pa-content">Campaign setup</h2>
+              <span className="text-pa-11 text-pa-content-tertiary">Live configuration</span>
             </div>
-            <div>
-              <Eyebrow>Market</Eyebrow>
-              <b className="text-pa-13">{campaign.market}</b>
-            </div>
-            <div>
-              <Eyebrow>Spent / Cap</Eyebrow>
-              <b className="pa-num text-pa-13">
-                {moneyK(campaign.spend)} / {moneyK(campaign.cap)}
-              </b>
-            </div>
-            <div>
-              <Eyebrow>Schedule</Eyebrow>
-              <b className="pa-num text-pa-13">{campaign.schedule}</b>
+            <div className="mt-pa-4 grid grid-cols-2 gap-x-pa-6 gap-y-pa-5 lg:grid-cols-4">
+              <div className="min-w-0">
+                <div className="font-pa-mono text-pa-10 font-semibold uppercase tracking-[0.12em] text-pa-content-secondary">
+                  Objective
+                </div>
+                <div className="mt-pa-2 text-pa-15 font-semibold text-pa-content">
+                  {product.objective}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="font-pa-mono text-pa-10 font-semibold uppercase tracking-[0.12em] text-pa-content-secondary">
+                  Market
+                </div>
+                <div className="mt-pa-2 text-pa-15 font-semibold text-pa-content">
+                  {campaign.market}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="font-pa-mono text-pa-10 font-semibold uppercase tracking-[0.12em] text-pa-content-secondary">
+                  Spent / cap
+                </div>
+                <div className="pa-num mt-pa-2 whitespace-nowrap text-pa-15 font-semibold text-pa-content">
+                  {moneyK(campaign.spend)} / {moneyK(campaign.cap)}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="font-pa-mono text-pa-10 font-semibold uppercase tracking-[0.12em] text-pa-content-secondary">
+                  Schedule
+                </div>
+                <div className="pa-num mt-pa-2 whitespace-nowrap text-pa-15 font-semibold text-pa-content">
+                  {campaign.schedule}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -278,9 +369,11 @@ export default function CampaignDetailPage(): ReactNode {
               <div className="font-pa-mono text-pa-9 uppercase tracking-[0.1em] text-pa-content-tertiary">
                 {s.label}
               </div>
-              <div className="pa-num mt-pa-2 text-pa-20 font-bold">{s.value}</div>
+              <div key={String(s.value)} className="pa-num pa-metric-update mt-pa-2 text-pa-20 font-bold">
+                {s.value}
+              </div>
               <div className="mt-pa-1 text-pa-10 text-pa-content-tertiary">{s.sub}</div>
-              {s.pct > 0 && <Track value={s.pct} />}
+              {s.pct > 0 && <Track value={s.pct} className="pa-progress-track" />}
             </div>
           ))}
         </div>
@@ -291,18 +384,35 @@ export default function CampaignDetailPage(): ReactNode {
           tone="error"
           className="mb-pa-4"
           action={
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setReasonOpen(true);
-              }}
-            >
-              See reason
-            </Button>
+            <span className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setReasonOpen(true);
+                }}
+              >
+                See reason
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  dispatch({ type: 'retryRejectedAds', campaignId: campaign.id });
+                  toast(
+                    `Rebuilding ${String(rejected.length)} rejected ad${rejected.length === 1 ? '' : 's'}`,
+                    'ok',
+                  );
+                }}
+              >
+                Recreate & upload
+              </Button>
+            </span>
           }
         >
-          <b>{rejected.length} ad was rejected by the platform</b>
+          <b>
+            {rejected.length} ad{rejected.length === 1 ? '' : 's'}{' '}
+            {rejected.length === 1 ? 'was' : 'were'} rejected by the platform
+          </b>
           <span className="ml-pa-2">
             {state.creators.find((c) => c.id === rejected[0]?.creatorId)?.name} — the ad is closed.
             Other creators are unaffected.
@@ -311,7 +421,7 @@ export default function CampaignDetailPage(): ReactNode {
       )}
 
       <div className="grid gap-pa-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Card>
+        <Card className="flex h-[860px] max-h-[860px] flex-col overflow-hidden">
           <CardHead
             title="Creator work"
             aside={
@@ -322,9 +432,9 @@ export default function CampaignDetailPage(): ReactNode {
           />
           {work.length > 0 ? (
             <>
-              <div className="overflow-x-auto p-pa-2">
-                <div className="min-w-[600px]">
-                  {work.map((w) => {
+              <div className="flex min-h-0 flex-1 overflow-x-auto p-pa-2">
+                <div className="min-h-0 min-w-[600px] flex-1 overflow-y-auto">
+                  {visibleWork.map((w, index) => {
                     const creator = state.creators.find((c) => c.id === w.creatorId);
                     if (!creator) return null;
                     return (
@@ -332,17 +442,52 @@ export default function CampaignDetailPage(): ReactNode {
                         key={w.creatorId}
                         creator={creator}
                         delivery={w}
+                        enterDelay={Math.min(index, 6) * 80}
                         onOpen={() => {
-                          router.push(`/pa/kols/${creator.id}`);
+                          setSelectedCreatorId(creator.id);
+                        }}
+                        onStop={() => {
+                          dispatch({
+                            type: 'stopDelivery',
+                            campaignId: campaign.id,
+                            creatorId: creator.id,
+                          });
+                          toast(`${creator.name} video stopped`, 'ok');
                         }}
                       />
                     );
                   })}
                 </div>
               </div>
-              <p className="border-t border-pa-border-subtle px-pa-4 py-pa-3 text-pa-11 text-pa-content-tertiary">
-                Showing {work.length} of {campaign.kols}
-              </p>
+              <div className="flex items-center justify-between border-t border-pa-border-subtle px-pa-4 py-pa-3 text-pa-11 text-pa-content-tertiary">
+                <span>
+                  Showing {workPage * WORK_PAGE_SIZE + 1}–
+                  {Math.min((workPage + 1) * WORK_PAGE_SIZE, work.length)} of {work.length}
+                </span>
+                {pageCount > 1 ? (
+                  <span className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={workPage === 0}
+                      onClick={() => setWorkPage((page) => Math.max(0, page - 1))}
+                      className="pa-hit rounded-pa-md px-2 py-1 font-semibold text-pa-content-body hover:bg-pa-surface-muted disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    <span className="pa-num">
+                      {workPage + 1} / {pageCount}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={workPage >= pageCount - 1}
+                      onClick={() => setWorkPage((page) => Math.min(pageCount - 1, page + 1))}
+                      className="pa-hit rounded-pa-md px-2 py-1 font-semibold text-pa-content-body hover:bg-pa-surface-muted disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </span>
+                ) : null}
+              </div>
             </>
           ) : (
             <EmptyState
@@ -369,16 +514,20 @@ export default function CampaignDetailPage(): ReactNode {
 
         {/* 双 agent 栏已收敛成一条自动化日志：42 个创作者并行工作，
             右栏只显示其中一个是武断的（CAMPAIGN-LIVE.md）。 */}
-        <Card>
+        <Card className="flex h-[860px] max-h-[860px] flex-col overflow-hidden">
           <CardHead
             title="Automation log"
             aside={
               <DataTrust state={live ? 'fresh' : 'partial'}>{live ? 'live' : 'idle'}</DataTrust>
             }
           />
-          <div className="px-pa-4 pb-pa-4 pt-pa-1">
-            {log.map((entry) => (
-              <LogRow key={`${entry.t}-${entry.title}`} entry={entry} />
+          <div className="min-h-0 flex-1 overflow-y-auto px-pa-4 pb-pa-4 pt-pa-1">
+            {log.map((entry, index) => (
+              <LogRow
+                key={`${entry.t}-${entry.title}-${entry.sub}`}
+                entry={entry}
+                fresh={index === 0}
+              />
             ))}
           </div>
         </Card>
@@ -496,6 +645,146 @@ export default function CampaignDetailPage(): ReactNode {
           <p className="text-pa-12 text-pa-content-body">
             Other creators on this campaign are unaffected and keep delivering.
           </p>
+        </Dialog>
+      )}
+
+      {selectedCreator && selectedDelivery && (
+        <Dialog
+          wide
+          title={`${selectedCreator.name} · campaign video`}
+          lede={`${selectedCreator.handle} · ${selectedCreator.platforms.join(' / ').toUpperCase()} · ${campaignLabel(campaign)}`}
+          onClose={() => {
+            setSelectedCreatorId(null);
+          }}
+          footer={
+            <>
+              {selectedCreator.profileUrl ? (
+                <a
+                  href={selectedCreator.profileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={buttonClasses('secondary')}
+                >
+                  Open creator account
+                </a>
+              ) : null}
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelectedCreatorId(null);
+                }}
+              >
+                Close
+              </Button>
+            </>
+          }
+        >
+          <div className="grid gap-pa-4 md:grid-cols-[180px_minmax(0,1fr)]">
+            <div
+              className="relative aspect-[9/16] overflow-hidden rounded-pa-md bg-pa-surface-muted"
+              style={{
+                background: selectedCreator.avatar
+                  ? `linear-gradient(155deg, rgba(15,23,42,.12), rgba(15,23,42,.7)), url(${selectedCreator.avatar}) center / cover`
+                  : `linear-gradient(145deg, hsl(${String(selectedCreator.hue)} 46% 60%), hsl(${String((selectedCreator.hue + 38) % 360)} 42% 36%))`,
+              }}
+            >
+              <span className="absolute left-pa-2 top-pa-2">
+                <StatusPill
+                  tone={
+                    selectedDelivery.state === 'rejected'
+                      ? 'negative'
+                      : selectedDelivery.state === 'paused'
+                        ? 'neutral'
+                        : selectedDelivery.state === 'live'
+                          ? 'positive'
+                          : 'warning'
+                  }
+                >
+                  {selectedDelivery.state === 'rejected'
+                    ? 'Ad rejected'
+                    : selectedDelivery.state === 'paused'
+                      ? 'Video stopped'
+                      : selectedDelivery.state === 'live'
+                        ? 'Live video'
+                        : 'Preparing'}
+                </StatusPill>
+              </span>
+              <span className="absolute bottom-pa-2 left-pa-2 font-pa-mono text-pa-9 text-white [text-shadow:0_1px_3px_rgba(0,0,0,.7)]">
+                AI VIDEO · 9:16 · 0:15
+              </span>
+            </div>
+            <div className="grid content-start gap-pa-3">
+              <div>
+                <Eyebrow>Video work</Eyebrow>
+                <b className="mt-1 block text-pa-17">{selectedAsset?.file ?? 'AI creator cut'}</b>
+                <span className="text-pa-11 text-pa-content-tertiary">
+                  {selectedAsset?.status === 'ready'
+                    ? 'Auto-cleared and connected to the creator account'
+                    : selectedAsset?.status === 'generating'
+                      ? 'AI creative rendering'
+                      : 'Platform delivery state'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 rounded-pa-md border border-pa-border-subtle bg-pa-surface-muted p-pa-3">
+                <div>
+                  <Eyebrow>Status</Eyebrow>
+                  <b className="text-pa-13">
+                    {selectedDelivery.state === 'live'
+                      ? 'Live'
+                      : selectedDelivery.state === 'rejected'
+                        ? 'Ad rejected'
+                        : selectedDelivery.state === 'paused'
+                          ? 'Stopped'
+                          : 'Preparing'}
+                  </b>
+                </div>
+                <div>
+                  <Eyebrow>Views</Eyebrow>
+                  <b className="pa-num text-pa-13">{compact(selectedDelivery.views)}</b>
+                </div>
+                <div>
+                  <Eyebrow>Impressions</Eyebrow>
+                  <b className="pa-num text-pa-13">{compact(selectedDelivery.impressions)}</b>
+                </div>
+                <div>
+                  <Eyebrow>Clicks</Eyebrow>
+                  <b className="pa-num text-pa-13">{compact(selectedDelivery.clicks)}</b>
+                </div>
+                <div>
+                  <Eyebrow>Pacing</Eyebrow>
+                  <b className="pa-num text-pa-13">{selectedDelivery.pacing}%</b>
+                </div>
+                <div>
+                  <Eyebrow>CPI</Eyebrow>
+                  <b className="pa-num text-pa-13">{cpi(selectedDelivery.cpi)}</b>
+                </div>
+              </div>
+              <div className="rounded-pa-md border border-pa-border-subtle p-pa-3">
+                <Eyebrow>Creator account</Eyebrow>
+                <div className="mt-pa-2 flex items-center gap-pa-2">
+                  <Avatar
+                    name={selectedCreator.name}
+                    src={selectedCreator.avatar}
+                    hue={selectedCreator.hue}
+                    size="s"
+                  />
+                  <div className="min-w-0">
+                    <b className="block truncate text-pa-12">{selectedCreator.name}</b>
+                    {selectedCreator.profileUrl ? (
+                      <a
+                        href={selectedCreator.profileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block truncate text-pa-11 text-pa-accent hover:underline"
+                      >
+                        {selectedCreator.profileUrl}
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </Dialog>
       )}
 

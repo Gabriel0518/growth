@@ -9,9 +9,13 @@ import type { Asset, Creator } from '@/lib/pa/types';
  * ⚠️ **AI 变体与其源素材共用同一个色相** —— 换脸只改人脸、场景不变，
  * 这样卡片上的血缘关系一眼可读（BACKLOG.md）。
  */
-function thumbStyle(hue: number): { background: string } {
+function thumbStyle(hue: number, cover?: string): { background: string } {
   return {
-    background: `linear-gradient(150deg, hsl(${String(hue)} 46% 62%), hsl(${String((hue + 40) % 360)} 42% 38%))`,
+    background: `${cover ? `linear-gradient(150deg, hsla(${String(hue)} 46% 28% / .18), hsla(${String((hue + 40) % 360)} 42% 18% / .72)), ` : ''}${
+      cover
+        ? `url(${cover}) center / cover`
+        : `linear-gradient(150deg, hsl(${String(hue)} 46% 62%), hsl(${String((hue + 40) % 360)} 42% 38%))`
+    }`,
   };
 }
 
@@ -30,7 +34,7 @@ export function AssetCard({ asset, creator, onOpen }: AssetCardProps): ReactNode
     >
       <div
         className="relative grid aspect-[16/11] place-items-center"
-        style={thumbStyle(asset.hue)}
+        style={thumbStyle(asset.hue, asset.cover ?? creator?.avatar)}
       >
         <div className="absolute right-pa-2 top-pa-2">
           <StatusPill tone={ASSET_TONE_OF(asset.status)}>{ASSET_LABEL[asset.status]}</StatusPill>

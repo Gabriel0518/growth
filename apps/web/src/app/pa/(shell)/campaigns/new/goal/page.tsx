@@ -15,28 +15,53 @@ import {
   useToast,
   usePaStore,
 } from '@/components/pa';
-import { Button, buttonClasses, DataTrust, StatusPill } from '@/components/ui';
+import { Button, buttonClasses, DataTrust, Dropdown } from '@/components/ui';
 import { campaignLabel, int, money, roas } from '@/lib/pa/format';
+import type { ConversionGoal } from '@/lib/pa/types';
 
 const INPUT =
   'pa-num h-[var(--pa-hit-target)] w-full rounded-pa-md border border-pa-border bg-pa-surface px-[14px] text-pa-13 outline-none focus:border-pa-ring focus:shadow-[0_0_0_3px_rgba(8,145,178,0.16)]';
 
-/**
- * ⚠️ 两种目标**不对称**，这是本页最容易做错的地方（CREATE-CAMPAIGN.md）：
- *
- *   installs 模式 —— 钱是**填**进去的（预算上限），安装量是算出来的
- *   roas 模式     —— 目标是个**比值**，不含量纲，推不出消耗；所以仍要用户填预算上限，
- *                   再由它反推预期营收
- *
- * 两个模式的「大数字区」因此不是同一个模板换数字。这里共用 cap 输入，
- * 但派生出的第二个数字不同（安装量 vs 预期营收）。
- */
-function derive(mode: 'installs' | 'roas', cap: number, targetRoas: number) {
+const GOAL_OPTIONS: { value: ConversionGoal; label: string }[] = [
+  { value: 'installs', label: 'Installs' },
+  { value: 'purchases', label: 'Purchases' },
+  { value: 'signups', label: 'Sign-ups' },
+  { value: 'leads', label: 'Leads' },
+  { value: 'roas', label: 'ROAS' },
+  { value: 'cpm', label: 'CPM' },
+];
+
+const GOAL_HINTS: Record<ConversionGoal, string> = {
+  installs: 'Optimise delivery toward efficient app installs.',
+  purchases: 'Optimise for completed purchases attributed to the campaign.',
+  signups: 'Optimise for new account registrations and trial starts.',
+  leads: 'Optimise for qualified lead submissions.',
+  roas: 'Optimise toward a return target based on attributed revenue.',
+  cpm: 'Optimise toward an efficient cost per thousand impressions.',
+};
+
+/** 预算是统一输入，预计结果随优化目标切换。 */
+function derive(mode: ConversionGoal, cap: number, targetRoas: number, targetCpm: number) {
   // KOL 数量按该品类的平均单条曝光估算。接后端后换成真实的品类基准值。
   const kols = Math.max(12, Math.round(cap / 3000));
-  return mode === 'roas'
-    ? { kols, label: 'Projected revenue', value: money(cap * targetRoas) }
-    : { kols, label: 'Projected installs', value: int(Math.round(cap / 2.4)) };
+  switch (mode) {
+    case 'roas':
+      return { kols, label: 'Projected revenue', value: money(cap * targetRoas) };
+    case 'cpm':
+      return {
+        kols,
+        label: 'Projected impressions',
+        value: int(Math.round((cap / Math.max(1, targetCpm)) * 1000)),
+      };
+    case 'purchases':
+      return { kols, label: 'Projected purchases', value: int(Math.round(cap / 18)) };
+    case 'signups':
+      return { kols, label: 'Projected sign-ups', value: int(Math.round(cap / 5)) };
+    case 'leads':
+      return { kols, label: 'Projected leads', value: int(Math.round(cap / 8)) };
+    default:
+      return { kols, label: 'Projected installs', value: int(Math.round(cap / 2.4)) };
+  }
 }
 
 export default function ConversionGoalPage(): ReactNode {
@@ -63,7 +88,7 @@ export default function ConversionGoalPage(): ReactNode {
   // 取成常量：下面的 patch/publish 是闭包，TS 无法把可选链的收窄带进去。
   const current = draft;
   const product = state.products.find((p) => p.id === current.productId);
-  const est = derive(current.mode, current.cap, current.targetRoas);
+  const est = derive(current.mode, current.cap, current.targetRoas, current.targetCpm);
 
   function patch(next: Partial<typeof current>): void {
     dispatch({ type: 'setDraft', draft: { ...current, ...next } });
@@ -102,75 +127,36 @@ export default function ConversionGoalPage(): ReactNode {
         </Link>
       </Card>
 
-      <Card padded className="mb-pa-4">
-        <Eyebrow className="mb-pa-3">② Optimise for</Eyebrow>
-        <div className="grid gap-pa-3 md:grid-cols-2">
-          {(
-            [
-              [
-                'installs',
-                'App installs',
-                'Bid toward the lowest cost per install. Best when the product is new in this market.',
-              ],
-              [
-                'roas',
-                'Return on ad spend',
-                'Bid toward a blended ROAS target. Needs at least 30 days of purchase history.',
-              ],
-            ] as const
-          ).map(([mode, title, body]) => {
-            const on = current.mode === mode;
-            return (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => {
-                  patch({ mode });
-                }}
-                className={`rounded-pa-lg border bg-pa-surface p-pa-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pa-ring ${
-                  on
-                    ? 'border-pa-accent shadow-[0_0_0_3px_var(--color-pa-accent-subtle)]'
-                    : 'border-pa-border'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-pa-2">
-                  <b className="text-pa-13">{title}</b>
-                  {on ? <StatusPill tone="progress">Selected</StatusPill> : null}
-                </div>
-                <p className="mt-pa-2 text-pa-11 text-pa-content-tertiary">{body}</p>
-              </button>
-            );
-          })}
+      <Card padded className="mb-pa-4 border-pa-border-strong">
+        <div className="mb-pa-5 flex items-center justify-between gap-pa-3 border-b border-pa-border-subtle pb-pa-4">
+          <div>
+            <div className="text-pa-11 font-semibold uppercase tracking-[0.12em] text-pa-accent">
+              Step 2
+            </div>
+            <h2 className="mt-[4px] text-pa-20 font-bold text-pa-content">Optimise for</h2>
+          </div>
+          <span className="text-pa-11 text-pa-content-tertiary">Conversion setup</span>
         </div>
 
-        {current.mode === 'roas' && (
-          <div className="mt-pa-4 grid max-w-[280px] gap-[6px]">
+        <div className="grid gap-pa-4 md:grid-cols-2">
+          <div className="grid gap-[6px]">
             <label
-              htmlFor="pa-troas"
+              htmlFor="pa-cgoal"
               className="text-pa-12 font-semibold text-pa-content-secondary"
             >
-              Target ROAS
+              Conversion goal
             </label>
-            <input
-              id="pa-troas"
-              type="number"
-              step="0.1"
-              min="1"
-              className={INPUT}
-              value={current.targetRoas}
-              onChange={(event) => {
-                patch({ targetRoas: Number(event.target.value) || 0 });
+            <Dropdown
+              id="pa-cgoal"
+              aria-label="Conversion goal"
+              value={current.mode}
+              onChange={(value) => {
+                patch({ mode: value as ConversionGoal });
               }}
+              options={GOAL_OPTIONS}
             />
-            <p className="text-pa-11 text-pa-content-tertiary">
-              Campaigns below target for 3 days trigger a review.
-            </p>
+            <p className="text-pa-11 text-pa-content-tertiary">{GOAL_HINTS[current.mode]}</p>
           </div>
-        )}
-
-        <hr className="my-pa-5 border-0 border-t border-pa-border-subtle" />
-
-        <div className="grid gap-pa-4 md:grid-cols-2">
           <div className="grid gap-[6px]">
             <label htmlFor="pa-ccap" className="text-pa-12 font-semibold text-pa-content-secondary">
               Budget cap
@@ -190,6 +176,39 @@ export default function ConversionGoalPage(): ReactNode {
               Total spend ceiling for the whole flight. Delivery stops at the cap.
             </p>
           </div>
+        </div>
+
+        {(current.mode === 'roas' || current.mode === 'cpm') && (
+          <div className="mt-pa-4 grid max-w-[280px] gap-[6px]">
+            <label
+              htmlFor="pa-troas"
+              className="text-pa-12 font-semibold text-pa-content-secondary"
+            >
+              {current.mode === 'roas' ? 'Target ROAS' : 'Target CPM'}
+            </label>
+            <input
+              id="pa-troas"
+              type="number"
+              step="0.1"
+              min="1"
+              className={INPUT}
+              value={current.mode === 'roas' ? current.targetRoas : current.targetCpm}
+              onChange={(event) => {
+                const value = Number(event.target.value) || 0;
+                patch(current.mode === 'roas' ? { targetRoas: value } : { targetCpm: value });
+              }}
+            />
+            <p className="text-pa-11 text-pa-content-tertiary">
+              {current.mode === 'roas'
+                ? 'Campaigns below target for 3 days trigger a review.'
+                : 'Target cost per 1,000 impressions.'}
+            </p>
+          </div>
+        )}
+
+        <hr className="my-pa-5 border-0 border-t border-pa-border-subtle" />
+
+        <div className="grid gap-pa-4 md:grid-cols-2">
           <div className="grid gap-[6px]">
             <span className="text-pa-12 font-semibold text-pa-content-secondary">Delivery</span>
             <div className={`${INPUT} flex items-center bg-pa-surface-muted text-pa-content-body`}>
@@ -279,8 +298,10 @@ export default function ConversionGoalPage(): ReactNode {
                 from: '—',
                 to:
                   current.mode === 'roas'
-                    ? `Return on ad spend · target ${roas(current.targetRoas)}`
-                    : (product?.objective ?? ''),
+                    ? `ROAS · target ${roas(current.targetRoas)}`
+                    : current.mode === 'cpm'
+                      ? `CPM · target $${current.targetCpm.toFixed(2)}`
+                      : (GOAL_OPTIONS.find((option) => option.value === current.mode)?.label ?? ''),
               },
               { label: 'Budget cap', from: '$0', to: money(current.cap) },
               { label: 'Delivery', from: '—', to: 'Manual start / stop' },

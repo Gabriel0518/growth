@@ -137,6 +137,7 @@ function blankDraft(): Draft {
     cap: 120_000,
     mode: 'installs',
     targetRoas: 4,
+    targetCpm: 12,
     kolTarget: 40,
     channels: ['ig', 'tt'],
     days: 30,

@@ -34,6 +34,7 @@ export function STATUS_TONE_OF(status: CampaignStatus): PillTone {
 export const DELIVERY_LABEL: Record<DeliveryState, string> = {
   live: 'Live',
   preparing: 'Preparing',
+  paused: 'Video stopped',
   // ⚠️ 这是**平台拒审**（Meta/TikTok），广告随之关闭。
   // 与 Content 页的「内部审核未通过」不是一回事，两者的色和动作都不能共用。
   rejected: 'Ad rejected',
@@ -42,6 +43,7 @@ export const DELIVERY_LABEL: Record<DeliveryState, string> = {
 const DELIVERY_TONE: Record<DeliveryState, PillTone> = {
   live: 'positive',
   preparing: 'neutral',
+  paused: 'neutral',
   rejected: 'negative',
 };
 

@@ -7,7 +7,7 @@
  *
  * 原型解决过 Figma 稿里的两处自相矛盾，这里沿用同样的取舍：
  *   - **市场**：所有 campaign 与 creator mock 都统一为 US，与最新 Figma Draft 的市场筛选一致。
- *   - **创作者**：Overview 列了八个 KOL Network 里没有的名字。统一成十二人的一份名册。
+ *   - **创作者**：Overview 的头部 creator 与扩展的 US network 共用一份名册。
  *
  * 还有一处**留着没动、值得决策**：`03.5 · Campaign detail` 把 Yahtzee 那条显示成
  * `$84,200 / $186,000`，而 Overview 显示 `$184,905`。这里全程用 Overview 的数。
@@ -24,6 +24,7 @@ import type {
   HistoryEntry,
   LogEntry,
   Product,
+  PlatformKey,
   WorkspaceUser,
 } from './types';
 
@@ -135,8 +136,8 @@ export const CAMPAIGNS: Campaign[] = [
     days: 12,
     channels: ['ig', 'tt', 'yt'],
     schedule: 'Sep 1 – Sep 30',
-    delivering: 39,
-    closed: 1,
+    delivering: 37,
+    closed: 3,
   },
   {
     id: 'CMP-2408-027',
@@ -287,7 +288,7 @@ export const CAMPAIGNS: Campaign[] = [
   },
 ];
 
-export const CREATORS: Creator[] = [
+const BASE_CREATORS: Creator[] = [
   {
     id: 'ava',
     name: 'Emma Chamberlain',
@@ -494,19 +495,171 @@ export const CREATORS: Creator[] = [
   },
 ];
 
+/** Expanded US creator network used by the live campaign simulator. The local
+ * avatar set is intentionally reused so the demo never depends on a remote
+ * image host, while the names, handles and metrics stay varied and realistic. */
+const EXTRA_CREATOR_NAMES = [
+  'Mia Harper',
+  'Ethan Cole',
+  'Layla Brooks',
+  'Caleb Foster',
+  'Aria Bennett',
+  'Logan Pierce',
+  'Nora Ellis',
+  'Wyatt Hayes',
+  'Sienna Reed',
+  'Owen Blake',
+  'Riley Morgan',
+  'Jade Lawson',
+  'Mason Grant',
+  'Zoey Carter',
+  'Luca Parker',
+  'Avery Mitchell',
+  'Kinsley Ward',
+  'Hudson Scott',
+  'Mila Turner',
+  'Asher James',
+  'Isla Palmer',
+  'Grayson Bell',
+  'Chloe Bennett',
+  'Mateo Brooks',
+  'Peyton Wells',
+  'Violet King',
+  'Nolan Price',
+  'Audrey Lane',
+  'Carter Young',
+  'Naomi West',
+  'Ezra Collins',
+  'Bella Stone',
+  'Roman Clark',
+  'Luna Davis',
+  'Kai Peterson',
+  'Willow Moore',
+  'Jaxon Miller',
+  'Sadie Cooper',
+  'Leo Richardson',
+  'Ruby Bailey',
+  'Finn Anderson',
+  'Ivy Thompson',
+  'Miles Parker',
+  'Elise Martin',
+  'Theo Wilson',
+  'Maya Robinson',
+  'Jack Sullivan',
+  'Lila Walker',
+  'Ben Carter',
+  'Mackenzie Hall',
+  'Sam Rivera',
+  'Tessa Wright',
+  'Cole Nguyen',
+  'Lena Brooks',
+  'Max Flores',
+  'Daisy Murphy',
+  'Jasper Kim',
+  'Wren Adams',
+  'Beau Ross',
+  'Cora Mitchell',
+  'Eli Howard',
+  'June Phillips',
+  'Zane Rogers',
+  'Mae Harrison',
+  'Luke Watson',
+  'Skye Peterson',
+  'Iris Gray',
+  'Drew Sanders',
+  'Ari Bennett',
+  'Kira Jenkins',
+  'Reid Coleman',
+  'Nia Wallace',
+  'Troy Owens',
+  'Elle Hart',
+  'Gavin Webb',
+  'Lana Bishop',
+  'Micah Stone',
+  'Sloane Pierce',
+  'Remy Ford',
+  'Poppy Grant',
+] as const;
+
+const CREATOR_AVATARS = [
+  '/pa/avatars/emmachamberlain.jpg',
+  '/pa/avatars/mkbhd.jpg',
+  '/pa/avatars/nikkietutorials.jpg',
+  '/pa/avatars/zachking.jpg',
+  '/pa/avatars/iamtabithabrown.jpg',
+  '/pa/avatars/hudabeauty.jpg',
+  '/pa/avatars/khaby.jpg',
+  '/pa/avatars/bretmanrock.jpg',
+  '/pa/avatars/addisonrae.jpg',
+  '/pa/avatars/lillysingh.jpg',
+  '/pa/avatars/mrbeast.jpg',
+  '/pa/avatars/aliabdaal.jpg',
+] as const;
+
+const VIDEO_COVER_FILES = Array.from({ length: 18 }, (_, index) =>
+  `/pa/video-covers/cover-${String(index + 1).padStart(2, '0')}.jpg`,
+);
+
+function coversFor(seed: number): [string, string, string] {
+  return [0, 1, 2].map(
+    (offset) => VIDEO_COVER_FILES[(seed * 3 + offset) % VIDEO_COVER_FILES.length]!,
+  ) as [string, string, string];
+}
+
+const EXTRA_CREATORS: Creator[] = EXTRA_CREATOR_NAMES.map((name, index) => {
+  const slug = name.replace(/[^a-z0-9]+/gi, '').toLowerCase();
+  const platform = index % 3 === 0 ? 'ig' : index % 3 === 1 ? 'tt' : 'yt';
+  const second = index % 2 === 0 ? (platform === 'ig' ? 'tt' : 'ig') : 'yt';
+  const tags = [
+    ['Lifestyle', 'Fashion'],
+    ['Tech', 'Reviews'],
+    ['Beauty', 'Wellness'],
+    ['Fitness', 'Health'],
+    ['Food', 'Travel'],
+    ['Gaming', 'Entertainment'],
+  ][index % 6] ?? ['Lifestyle', 'Creator'];
+  return {
+    id: `network-${String(index + 1).padStart(3, '0')}`,
+    name,
+    handle: `@${slug}`,
+    market: 'US',
+    platforms: [platform, second] as [PlatformKey, PlatformKey],
+    tags,
+    followers: 180_000 + ((index * 173_000) % 8_600_000),
+    eng: Number((3.2 + ((index * 0.37) % 4.4)).toFixed(1)),
+    cpe: 7 + (index % 13),
+    joined: index % 2 === 0 ? 'Aug 2026' : 'Jul 2026',
+    avgViews: 48_000 + ((index * 91_000) % 2_100_000),
+    hue: (index * 29 + 18) % 360,
+    avatar: CREATOR_AVATARS[index % CREATOR_AVATARS.length]!,
+    profileUrl:
+      platform === 'ig'
+        ? `https://www.instagram.com/${slug}/`
+        : platform === 'tt'
+          ? `https://www.tiktok.com/@${slug}`
+          : `https://www.youtube.com/@${slug}`,
+    authorized: index % 7 !== 0,
+  };
+});
+
+export const CREATORS: Creator[] = [...BASE_CREATORS, ...EXTRA_CREATORS].map((creator, index) => ({
+  ...creator,
+  videoCovers: coversFor(index),
+}));
+
 export const DELIVERY: Delivery[] = [
   {
     creatorId: 'ava',
     campaignId: 'CMP-2408-031',
-    impressions: 250_000,
-    clicks: 7600,
-    revenue: 9317,
-    pacing: 82,
-    roas: 0.89,
+    impressions: 0,
+    clicks: 0,
+    revenue: 0,
+    pacing: 0,
+    roas: 0,
     fit: 92,
     state: 'live',
-    views: 142_000,
-    cpi: 2.18,
+    views: 0,
+    cpi: 0,
   },
   {
     creatorId: 'kenji',
@@ -517,9 +670,9 @@ export const DELIVERY: Delivery[] = [
     pacing: 88,
     roas: 1,
     fit: 88,
-    state: 'live',
-    views: 186_000,
-    cpi: 2.41,
+    state: 'rejected',
+    views: 0,
+    cpi: 0,
   },
   {
     creatorId: 'lucia',
@@ -530,9 +683,9 @@ export const DELIVERY: Delivery[] = [
     pacing: 74,
     roas: 0.82,
     fit: 81,
-    state: 'live',
-    views: 398_000,
-    cpi: 1.92,
+    state: 'rejected',
+    views: 0,
+    cpi: 0,
   },
   {
     creatorId: 'marcus',
@@ -550,15 +703,15 @@ export const DELIVERY: Delivery[] = [
   {
     creatorId: 'priya',
     campaignId: 'CMP-2408-031',
-    impressions: 145_000,
-    clicks: 4500,
-    revenue: 5818,
-    pacing: 63,
-    roas: 0.89,
+    impressions: 0,
+    clicks: 0,
+    revenue: 0,
+    pacing: 0,
+    roas: 0,
     fit: 74,
     state: 'live',
-    views: 241_000,
-    cpi: 2.76,
+    views: 0,
+    cpi: 0,
   },
   {
     creatorId: 'sofia',

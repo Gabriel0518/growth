@@ -18,7 +18,7 @@ import {
 import { Button, buttonClasses, Dropdown, MetricCard, Segment } from '@/components/ui';
 import { activeCampaigns, totals } from '@/lib/pa/derive';
 import { compact, int, money, roas } from '@/lib/pa/format';
-import type { CampaignStatus } from '@/lib/pa/types';
+import type { CampaignStatus, Delivery } from '@/lib/pa/types';
 
 type MomentumMetric = 'ROAS' | 'Reach' | 'Impressions' | 'Clicks' | 'Views' | 'Installs' | 'Spend';
 
@@ -139,63 +139,54 @@ export default function OverviewPage(): ReactNode {
     {
       label: 'Active campaigns',
       value: int(active.length),
-      sub: '+ 4.1% day over day',
       points: dailySeries(active.length, 0.041, 8),
       color: 'var(--color-pa-accent)',
     },
     {
       label: 'KOL partners',
       value: int(1284),
-      sub: '+ 12.4% day over day',
       points: dailySeries(1284, 0.124, 8),
       color: 'var(--color-pa-chart-1)',
     },
     {
       label: 'Total reach',
       value: compact(t.audience),
-      sub: '+ 18.1% day over day',
       points: dailySeries(t.audience, 0.181, 8),
       color: 'var(--color-pa-chart-2)',
     },
     {
       label: 'Blended ROAS',
       value: roas(t.roas),
-      sub: '+ 10.6% day over day',
       points: dailySeries(t.roas, 0.106, 8),
       color: 'var(--color-pa-chart-3)',
     },
     {
       label: 'Impressions',
       value: compact(t.impressions),
-      sub: '+ 16.4% day over day',
       points: dailySeries(t.impressions, 0.164, 8),
       color: 'var(--color-pa-chart-1)',
     },
     {
       label: 'Total clicks',
       value: compact(deliveryTotals.clicks),
-      sub: '+ 12.4% day over day',
       points: dailySeries(deliveryTotals.clicks, 0.124, 8),
       color: 'var(--color-pa-chart-2)',
     },
     {
       label: 'Video views',
       value: compact(deliveryTotals.views),
-      sub: '+ 14.2% day over day',
       points: dailySeries(deliveryTotals.views, 0.142, 8),
       color: 'var(--color-pa-chart-4)',
     },
     {
       label: 'Installs',
       value: compact(t.installs),
-      sub: '+ 9.6% day over day',
       points: dailySeries(t.installs, 0.096, 8),
       color: 'var(--color-pa-chart-3)',
     },
     {
       label: 'Ad spend',
       value: money(t.spend),
-      sub: '+ 8.2% day over day',
       points: dailySeries(t.spend, 0.082, 8),
       color: 'var(--color-pa-accent)',
     },
@@ -238,7 +229,6 @@ export default function OverviewPage(): ReactNode {
               key={card.label}
               label={card.label}
               value={card.value}
-              sub={card.sub}
               className="w-[244px] shrink-0 snap-start"
               trust={{ state: 'fresh', text: `fresh · ${state.lastSync}` }}
               aside={<Sparkline points={card.points} color={card.color} width={94} height={28} />}
@@ -251,7 +241,6 @@ export default function OverviewPage(): ReactNode {
         <Card>
           <CardHead
             title="Cross-platform momentum"
-            sub="Attributed performance across all active channels"
             aside={
               <div className="flex flex-wrap gap-pa-2">
                 <div className="w-[150px]">
@@ -305,7 +294,7 @@ export default function OverviewPage(): ReactNode {
         </Card>
 
         <Card>
-          <CardHead title="Channel mix" sub="Share of attributed reach" />
+          <CardHead title="Channel mix" />
           <div className="p-pa-4">
             <div className="flex items-baseline justify-between">
               <b className="pa-num text-pa-20">{compact(t.audience)}</b>
@@ -337,9 +326,6 @@ export default function OverviewPage(): ReactNode {
       <div className="mb-pa-3 flex flex-wrap items-end justify-between gap-pa-3">
         <div>
           <h2 className="text-[16px] font-semibold leading-[22px]">Collaborating creators</h2>
-          <p className="text-pa-11 text-pa-content-tertiary">
-            Live social accounts and their attributed campaign delivery
-          </p>
         </div>
         <div className="flex items-center gap-pa-3">
           <span className="pa-num text-pa-11 text-pa-content-tertiary">
@@ -350,28 +336,48 @@ export default function OverviewPage(): ReactNode {
           </Link>
         </div>
       </div>
-      <div className="mb-pa-6 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-pa-3">
-        {deliveryCreators.slice(0, 8).map((id) => {
-          const creator = state.creators.find((c) => c.id === id);
-          const delivery = state.delivery.find((d) => d.creatorId === id);
-          if (!creator || !delivery) return null;
-          return (
-            <CreatorCard
-              key={id}
-              creator={creator}
-              delivery={delivery}
-              campaign={state.campaigns.find((c) => c.id === delivery.campaignId)}
-            />
-          );
-        })}
+      <div className="mb-pa-6 grid grid-cols-1 gap-pa-3 sm:grid-cols-2 xl:grid-cols-4">
+        {(() => {
+          const fallbackCampaign = active[0] ?? state.campaigns[0];
+          const creatorIds = [
+            ...deliveryCreators,
+            ...state.creators.map((creator) => creator.id),
+          ].filter((id, index, ids) => ids.indexOf(id) === index);
+          return creatorIds.slice(0, 8).map((id, index) => {
+            const creator = state.creators.find((item) => item.id === id);
+            if (!creator) return null;
+            const existing = state.delivery.find((delivery) => delivery.creatorId === id);
+            const delivery: Delivery | undefined = existing ??
+              (fallbackCampaign
+                ? {
+                    creatorId: creator.id,
+                    campaignId: fallbackCampaign.id,
+                    impressions: Math.round(creator.avgViews * 1.35),
+                    clicks: Math.max(1, Math.round(creator.avgViews * 0.035)),
+                    revenue: Math.max(1, Math.round(creator.avgViews * 0.012)),
+                    pacing: Math.min(94, 46 + index * 5),
+                    roas: Number((1.9 + (index % 5) * 0.42).toFixed(2)),
+                    fit: Math.max(68, 94 - index * 3),
+                    state: 'live',
+                    views: Math.round(creator.avgViews * 0.72),
+                    cpi: 2.18,
+                  }
+                : undefined);
+            if (!delivery) return null;
+            return (
+              <CreatorCard
+                key={id}
+                creator={creator}
+                delivery={delivery}
+              />
+            );
+          });
+        })()}
       </div>
 
       <div className="mb-pa-3 flex flex-wrap items-end justify-between gap-pa-3">
         <div>
           <h2 className="text-[16px] font-semibold leading-[22px]">Active campaigns</h2>
-          <p className="text-pa-11 text-pa-content-tertiary">
-            {shown.length} priority campaigns · refreshed {state.lastSync}
-          </p>
         </div>
         <div className="flex items-center gap-pa-3">
           <div className="w-[170px]">
@@ -388,7 +394,7 @@ export default function OverviewPage(): ReactNode {
         </div>
       </div>
       {shown.length > 0 ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-pa-3">
+        <div className="grid grid-cols-1 gap-pa-3 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((campaign) => {
             const product = state.products.find((p) => p.id === campaign.productId);
             if (!product) return null;

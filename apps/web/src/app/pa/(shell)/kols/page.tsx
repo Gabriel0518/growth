@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import {
   CellStack,
@@ -58,6 +58,20 @@ export default function KolNetworkPage(): ReactNode {
   const [market, setMarket] = useState('all');
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
+  const [gridColumns, setGridColumns] = useState(2);
+  const [gridVisibleCount, setGridVisibleCount] = useState(6);
+  const loadLockRef = useRef(false);
+
+  useEffect(() => {
+    const updateColumns = () => {
+      // The grid uses a 248px minimum card plus a 12px gap. Keep each batch
+      // at exactly three visible rows at the current responsive breakpoint.
+      setGridColumns(Math.max(1, Math.floor((window.innerWidth - 260) / 260)));
+    };
+    updateColumns();
+    window.addEventListener('resize', updateColumns);
+    return () => window.removeEventListener('resize', updateColumns);
+  }, []);
 
   const markets = [...new Set(state.creators.map((c) => c.market))];
 
@@ -71,6 +85,28 @@ export default function KolNetworkPage(): ReactNode {
       return false;
     return true;
   });
+
+  const gridBatchSize = gridColumns * 3;
+
+  useEffect(() => {
+    loadLockRef.current = false;
+    setGridVisibleCount(gridBatchSize);
+  }, [gridBatchSize, size, market, query]);
+
+  useEffect(() => {
+    if (view !== 'grid' || gridVisibleCount >= rows.length) return;
+    const loadOnScroll = () => {
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 140;
+      if (!nearBottom || window.scrollY <= 0 || loadLockRef.current) return;
+      loadLockRef.current = true;
+      setGridVisibleCount((current) => Math.min(rows.length, current + gridBatchSize));
+      window.setTimeout(() => {
+        loadLockRef.current = false;
+      }, 350);
+    };
+    window.addEventListener('scroll', loadOnScroll, { passive: true });
+    return () => window.removeEventListener('scroll', loadOnScroll);
+  }, [view, rows.length, gridVisibleCount, gridBatchSize]);
 
   function toggle(id: string, on: boolean): void {
     setPicked((prev) => (on ? [...prev, id] : prev.filter((x) => x !== id)));
@@ -164,8 +200,9 @@ export default function KolNetworkPage(): ReactNode {
           />
         </Card>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(248px,1fr))] gap-pa-3">
-          {rows.map((creator) => (
+        <>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(248px,1fr))] gap-pa-3">
+            {rows.slice(0, gridVisibleCount).map((creator) => (
             <GridCard
               key={creator.id}
               creator={creator}
@@ -174,8 +211,14 @@ export default function KolNetworkPage(): ReactNode {
                 toggle(creator.id, on);
               }}
             />
-          ))}
-        </div>
+            ))}
+          </div>
+          {gridVisibleCount < rows.length ? (
+            <div className="py-pa-6 text-center text-pa-11 text-pa-content-tertiary">
+              Scroll for more creators
+            </div>
+          ) : null}
+        </>
       ) : (
         <TableCard>
           <TableScroll>
@@ -263,7 +306,7 @@ function GridCard({
   onToggle: (on: boolean) => void;
 }): ReactNode {
   return (
-    <div className="overflow-hidden rounded-pa-lg border border-pa-border bg-pa-surface hover:border-pa-border-strong hover:shadow-pa-1">
+    <div className="group overflow-hidden rounded-pa-lg border border-pa-border bg-pa-surface hover:border-pa-border-strong hover:shadow-pa-1">
       <div className="flex items-center gap-[10px] p-[14px]">
         <Checkbox checked={checked} onChange={onToggle} className="min-h-0" />
         <Avatar name={creator.name} src={creator.avatar} hue={creator.hue} size="m" />
@@ -280,17 +323,22 @@ function GridCard({
         </span>
       </div>
 
-      {/* 缩略图是程序化渐变占位，真实作品封面未接入 */}
       <div className="grid grid-cols-3 gap-[2px]">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="aspect-[3/4]"
-            style={{
-              background: `linear-gradient(150deg, hsl(${String((creator.hue + i * 14) % 360)} 46% 62%), hsl(${String((creator.hue + 40 + i * 14) % 360)} 42% 38%))`,
-            }}
-          />
-        ))}
+        {[0, 1, 2].map((i) => {
+          const cover = creator.videoCovers?.[i];
+          return cover === undefined ? (
+            <div key={i} className="aspect-[3/4] bg-pa-surface-muted" />
+          ) : (
+            <div key={cover} className="aspect-[3/4] overflow-hidden bg-pa-surface-muted">
+              <img
+                src={cover}
+                alt={`${creator.name} video cover ${String(i + 1)}`}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-[220ms] ease-out group-hover:scale-[1.04]"
+              />
+            </div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-3 gap-pa-2 px-[14px] py-pa-3">
