@@ -30,7 +30,7 @@ export function MetricCard({
     <div className={cn('rounded-pa-lg border border-pa-border bg-pa-surface p-pa-4', className)}>
       <div className="flex items-start gap-[10px]">
         <div className="min-w-0 flex-1">
-          <div className="text-pa-12 font-semibold text-pa-content-secondary">{label}</div>
+          <div className="text-pa-13 font-semibold text-pa-content">{label}</div>
           {/* pa-num：等宽数位 + 关连字，保证数值列对齐且 1/l、0/O 不混淆 */}
           <div className="pa-num mt-[6px] text-pa-27 font-bold">{value}</div>
         </div>

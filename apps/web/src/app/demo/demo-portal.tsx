@@ -1554,7 +1554,7 @@ const NAV: readonly { key: View; icon: string }[] = [
   { key: 'materials', icon: 'materials' },
 ];
 
-/** 顶栏日期区间筛选：预设「近 7 / 14 / 30 天」+ 自定义起止。改动即全局重新聚合。 */
+/** 顶栏日期区间筛选：自由选择起止日期。改动即全局重新聚合。 */
 function DateFilter({
   range,
   onChange,
@@ -1563,49 +1563,54 @@ function DateFilter({
   onChange: (r: DateRange) => void;
 }): React.ReactElement {
   const t = useT();
-  const presets = [
-    { n: 7, label: t('近 7 天', '7D') },
-    { n: 14, label: t('近 14 天', '14D') },
-    { n: 30, label: t('近 30 天', '30D') },
-  ];
   const today = todayStr();
-  const isPreset = (n: number): boolean => {
-    const p = lastNDays(n);
-    return p.start === range.start && p.end === range.end;
+  const isValidDate = (value: string): boolean => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return false;
+    const [year, month, day] = value.split('-').map(Number);
+    return (
+      date.getFullYear() === year && date.getMonth() === (month ?? 0) - 1 && date.getDate() === day
+    );
   };
   return (
     <div className={cx('dateFilter')}>
-      {presets.map((p) => (
-        <button
-          key={p.n}
-          type="button"
-          className={cx('filterBtn', isPreset(p.n) && 'filterBtnOn')}
-          onClick={() => {
-            onChange(lastNDays(p.n));
-          }}
-        >
-          {p.label}
-        </button>
-      ))}
       <input
         type="date"
         className={cx('dateInput')}
         value={range.start}
-        max={range.end}
+        max={today}
         onChange={(e) => {
-          if (e.target.value !== '') onChange({ start: e.target.value, end: range.end });
+          const start = e.target.value;
+          if (isValidDate(start)) {
+            const safeStart = start > today ? today : start;
+            const safeEnd = range.end > today ? today : range.end;
+            onChange({ start: safeStart, end: safeStart > safeEnd ? safeStart : safeEnd });
+          }
+        }}
+        onBlur={(e) => {
+          if (!isValidDate(e.currentTarget.value)) e.currentTarget.value = range.start;
         }}
         aria-label={t('起始日期', 'Start date')}
       />
-      <span className={cx('dateArrow')}>→</span>
+      <span className={cx('dateArrow')} aria-hidden="true">
+        →
+      </span>
       <input
         type="date"
         className={cx('dateInput')}
         value={range.end}
-        min={range.start}
         max={today}
         onChange={(e) => {
-          if (e.target.value !== '') onChange({ start: range.start, end: e.target.value });
+          const end = e.target.value;
+          if (isValidDate(end)) {
+            const safeEnd = end > today ? today : end;
+            const safeStart = range.start > today ? today : range.start;
+            onChange({ start: safeEnd < safeStart ? safeEnd : safeStart, end: safeEnd });
+          }
+        }}
+        onBlur={(e) => {
+          if (!isValidDate(e.currentTarget.value)) e.currentTarget.value = range.end;
         }}
         aria-label={t('结束日期', 'End date')}
       />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 
 import {
   AssetCard,
@@ -24,14 +24,28 @@ export default function ContentPage(): ReactNode {
   const [origin, setOrigin] = useState('all');
   const [status, setStatus] = useState('all');
   const [query, setQuery] = useState('');
+  const [productId, setProductId] = useState('all');
+  const [campaignId, setCampaignId] = useState('all');
+  const [creatorId, setCreatorId] = useState('all');
   const [openId, setOpenId] = useState<string | null>(null);
   const [genOpen, setGenOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadName, setUploadName] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [sources, setSources] = useState<string[]>([]);
   const [prompt, setPrompt] = useState('');
 
   const assets = state.assets.filter((a) => {
     if (origin !== 'all' && a.origin !== origin) return false;
     if (status !== 'all' && a.status !== status) return false;
+    if (
+      productId !== 'all' &&
+      (a.productId ?? state.campaigns.find((c) => c.id === a.campaignId)?.productId) !== productId
+    )
+      return false;
+    if (campaignId !== 'all' && a.campaignId !== campaignId) return false;
+    if (creatorId !== 'all' && a.creatorId !== creatorId) return false;
     if (query && !a.file.toLowerCase().includes(query.toLowerCase())) return false;
     return true;
   });
@@ -39,6 +53,39 @@ export default function ContentPage(): ReactNode {
   const opened = state.assets.find((a) => a.id === openId);
   const openedCreator = state.creators.find((c) => c.id === opened?.creatorId);
   const originals = state.assets.filter((a) => a.origin === 'original');
+
+  function onFileChange(event: ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0] ?? null;
+    setUploadFile(file);
+    if (file && !uploadName) setUploadName(file.name.replace(/\.[^.]+$/, ''));
+  }
+
+  function uploadSource(): void {
+    if (!uploadName.trim() || !uploadFile) {
+      toast("Couldn't upload — choose a video file and give it a name", 'error');
+      return;
+    }
+    const extension = uploadFile.name.split('.').pop()?.toUpperCase() || 'MP4';
+    dispatch({
+      type: 'addAsset',
+      asset: {
+        id: `upload-${String(Date.now())}`,
+        file: `${uploadName.trim()}.${uploadFile.name.split('.').pop() ?? 'mp4'}`,
+        kind: extension,
+        ratio: '9:16',
+        len: null,
+        status: 'ready',
+        origin: 'original',
+        hue: 196,
+        campaignId: 'unassigned',
+      },
+    });
+    setUploadOpen(false);
+    setUploadFile(null);
+    setUploadName('');
+    if (fileRef.current) fileRef.current.value = '';
+    toast('Source video uploaded to the library', 'ok');
+  }
 
   return (
     <>
@@ -50,13 +97,13 @@ export default function ContentPage(): ReactNode {
             {int(state.assets.length)} assets
           </span>
         }
-        lede="Source footage and the AI variants generated from it, per creator."
+        lede="Source footage and the AI variants generated from it, per campaign and creator."
         actions={
           <>
             <Button
               variant="secondary"
               onClick={() => {
-                toast('Upload is not wired up yet');
+                setUploadOpen(true);
               }}
             >
               Upload
@@ -72,7 +119,7 @@ export default function ContentPage(): ReactNode {
         }
       />
 
-      <div className="mb-pa-4 flex flex-wrap items-center justify-between gap-pa-3">
+      <div className="mb-pa-4 grid gap-pa-3 lg:grid-cols-[1fr_auto]">
         <div className="flex flex-wrap gap-pa-3">
           <Segment
             aria-label="Origin"
@@ -98,10 +145,56 @@ export default function ContentPage(): ReactNode {
               ]}
             />
           </div>
+          <div className="w-[180px]">
+            <Dropdown
+              aria-label="Application"
+              value={productId}
+              onChange={setProductId}
+              options={[
+                { value: 'all', label: 'All applications' },
+                ...state.products.map((p) => ({ value: p.id, label: p.name })),
+              ]}
+            />
+          </div>
+          <div className="w-[190px]">
+            <Dropdown
+              aria-label="Campaign"
+              value={campaignId}
+              onChange={setCampaignId}
+              options={[
+                { value: 'all', label: 'All campaigns' },
+                { value: 'unassigned', label: 'Unassigned' },
+                ...state.campaigns.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+            />
+          </div>
+          <div className="w-[180px]">
+            <Dropdown
+              aria-label="KOL"
+              value={creatorId}
+              onChange={setCreatorId}
+              options={[
+                { value: 'all', label: 'All KOLs' },
+                ...state.creators.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+            />
+          </div>
         </div>
         <div className="w-[240px]">
           <SearchField value={query} onChange={setQuery} placeholder="Search file name" />
         </div>
+      </div>
+
+      <div className="mb-pa-4 flex flex-wrap items-center gap-pa-2 text-pa-11 text-pa-content-tertiary">
+        <span className="rounded-pa-full bg-pa-surface-muted px-[10px] py-[5px]">
+          {state.assets.filter((asset) => asset.origin === 'original').length} source videos
+        </span>
+        <span className="rounded-pa-full bg-pa-surface-muted px-[10px] py-[5px]">
+          {state.assets.filter((asset) => asset.origin === 'ai').length} AI generated videos
+        </span>
+        <span className="text-pa-10">
+          Filter by application, campaign, or KOL to trace every variant.
+        </span>
       </div>
 
       {assets.length === 0 ? (
@@ -120,6 +213,9 @@ export default function ContentPage(): ReactNode {
                   setOrigin('all');
                   setStatus('all');
                   setQuery('');
+                  setProductId('all');
+                  setCampaignId('all');
+                  setCreatorId('all');
                 }}
               >
                 Clear all filters
@@ -183,6 +279,62 @@ export default function ContentPage(): ReactNode {
                 ? `AI variant${openedCreator === undefined ? '' : ` for ${openedCreator.name}`}`
                 : 'Source footage'}
             </span>
+          </div>
+
+          <div className="mx-auto w-full max-w-[300px] overflow-hidden rounded-pa-lg bg-pa-surface-muted">
+            {opened.previewUrl ? (
+              <video
+                src={opened.previewUrl}
+                poster={opened.cover ?? openedCreator?.avatar}
+                controls
+                playsInline
+                className="aspect-[9/16] h-auto w-full object-cover"
+              />
+            ) : (
+              <div
+                className="grid aspect-[9/16] place-items-center"
+                style={{
+                  background: opened.cover
+                    ? `linear-gradient(155deg, rgba(15,23,42,.06), rgba(15,23,42,.68)), url(${opened.cover}) center / cover`
+                    : `linear-gradient(145deg, hsl(${String(opened.hue)} 46% 62%), hsl(${String((opened.hue + 38) % 360)} 42% 38%))`,
+                }}
+              >
+                <span className="rounded-pa-full bg-black/50 px-pa-3 py-pa-2 text-pa-11 font-semibold text-white">
+                  Preview frame
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-pa-2 rounded-pa-md bg-pa-surface-muted p-pa-3 text-pa-11 text-pa-content-tertiary">
+            <div className="flex items-center justify-between gap-pa-3">
+              <span>Application</span>
+              <b className="text-pa-content-body">
+                {state.products.find(
+                  (product) =>
+                    product.id ===
+                    (opened.productId ??
+                      state.campaigns.find((campaign) => campaign.id === opened.campaignId)
+                        ?.productId),
+                )?.name ?? 'Unassigned'}
+              </b>
+            </div>
+            <div className="flex items-center justify-between gap-pa-3">
+              <span>Campaign</span>
+              <b className="truncate text-pa-content-body">
+                {state.campaigns.find((campaign) => campaign.id === opened.campaignId)?.name ??
+                  'Unassigned'}
+              </b>
+            </div>
+            {opened.sourceAssetId ? (
+              <div className="flex items-center justify-between gap-pa-3">
+                <span>Generated from</span>
+                <b className="truncate text-pa-content-body">
+                  {state.assets.find((asset) => asset.id === opened.sourceAssetId)?.file ??
+                    opened.sourceAssetId}
+                </b>
+              </div>
+            ) : null}
           </div>
 
           {opened.error === undefined ? null : (
@@ -278,6 +430,57 @@ export default function ContentPage(): ReactNode {
             </p>
           </div>
         </Drawer>
+      )}
+
+      {uploadOpen && (
+        <Dialog
+          title="Upload source video"
+          lede="Add original footage to the library. You can attach it to a campaign during campaign setup."
+          onClose={() => setUploadOpen(false)}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setUploadOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={uploadSource}>Upload source</Button>
+            </>
+          }
+        >
+          <div className="grid gap-pa-2">
+            <label
+              htmlFor="pa-upload-name"
+              className="text-pa-12 font-semibold text-pa-content-secondary"
+            >
+              Asset name
+            </label>
+            <input
+              id="pa-upload-name"
+              value={uploadName}
+              onChange={(event) => setUploadName(event.target.value)}
+              placeholder="summer_hook_v4"
+              className="h-[var(--pa-hit-target)] rounded-pa-md border border-pa-border bg-pa-surface px-[14px] text-pa-13 outline-none focus:border-pa-ring"
+            />
+          </div>
+          <div className="grid gap-pa-2">
+            <label
+              htmlFor="pa-upload-file"
+              className="text-pa-12 font-semibold text-pa-content-secondary"
+            >
+              Video file
+            </label>
+            <input
+              ref={fileRef}
+              id="pa-upload-file"
+              type="file"
+              accept="video/*"
+              onChange={onFileChange}
+              className="block w-full rounded-pa-md border border-dashed border-pa-border-strong bg-pa-surface-muted p-pa-3 text-pa-12"
+            />
+            <p className="text-pa-11 text-pa-content-tertiary">
+              MP4 or MOV · 9:16 recommended for creator placements.
+            </p>
+          </div>
+        </Dialog>
       )}
     </>
   );

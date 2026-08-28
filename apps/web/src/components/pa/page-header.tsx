@@ -33,7 +33,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, lede, badge, actions }: PageHeaderProps): ReactNode {
   return (
-    <div className="mb-pa-6 mt-pa-2 flex flex-wrap items-start gap-pa-4">
+    <div className="mb-pa-6 mt-pa-2 flex flex-col items-stretch gap-pa-4 lg:flex-row lg:flex-wrap lg:items-start">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-pa-3">
           <h1 className="text-pa-28 font-semibold tracking-[-0.01em]">{title}</h1>
@@ -44,7 +44,9 @@ export function PageHeader({ title, lede, badge, actions }: PageHeaderProps): Re
         )}
       </div>
       {actions === undefined ? null : (
-        <div className="flex shrink-0 flex-wrap gap-pa-3">{actions}</div>
+        <div className="flex w-full shrink-0 flex-wrap gap-pa-3 lg:w-auto lg:flex-nowrap lg:items-start lg:justify-end">
+          {actions}
+        </div>
       )}
     </div>
   );

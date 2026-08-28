@@ -61,7 +61,13 @@ interface WorkRowProps {
  * ⚠️ 失败行整行标红底并**默认排最前** —— 异常不能埋在 42 行里
  * （CAMPAIGN-LIVE.md：全自动系统的价值是出问题时立刻告诉你）。
  */
-export function WorkRow({ creator, delivery, onOpen, onStop, enterDelay = 0 }: WorkRowProps): ReactNode {
+export function WorkRow({
+  creator,
+  delivery,
+  onOpen,
+  onStop,
+  enterDelay = 0,
+}: WorkRowProps): ReactNode {
   const bad = delivery.state === 'rejected';
   return (
     <div
@@ -83,7 +89,7 @@ export function WorkRow({ creator, delivery, onOpen, onStop, enterDelay = 0 }: W
       <span className="flex min-w-0 flex-nowrap items-center gap-pa-2">
         <Avatar name={creator.name} src={creator.avatar} hue={creator.hue} size="m" />
         <span className="min-w-0">
-          <b className="block truncate text-pa-12">{creator.name}</b>
+          <b className="block truncate text-pa-14 font-semibold text-pa-content">{creator.name}</b>
           <span className="block truncate text-pa-11 text-pa-content-tertiary">
             {compact(creator.followers)} ·{' '}
             {creator.platforms.map((p) => PLATFORM_NAME[p]).join(', ')}

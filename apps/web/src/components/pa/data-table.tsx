@@ -48,7 +48,7 @@ export function TableHead({ columns }: { columns: Column[] }): ReactNode {
             key={col.key}
             scope="col"
             className={cn(
-              'whitespace-nowrap bg-pa-surface-muted px-pa-3 py-[13px] font-pa-mono text-pa-9 font-bold uppercase tracking-[0.1em] text-pa-content-tertiary',
+              'whitespace-nowrap bg-pa-surface-muted px-pa-3 py-[13px] font-pa-mono text-pa-10 font-bold uppercase tracking-[0.1em] text-pa-content-secondary',
               col.num ? 'text-right' : 'text-left',
             )}
           >
@@ -110,7 +110,7 @@ export function CellStack({
     <span className="flex items-center gap-[10px]">
       {media}
       <span className="min-w-0">
-        <b className="block truncate text-pa-12 font-bold text-pa-content">{title}</b>
+        <b className="block truncate text-pa-15 font-bold text-pa-content">{title}</b>
         {sub === undefined ? null : (
           <span className="mt-px block truncate text-pa-10 text-pa-content-tertiary">{sub}</span>
         )}

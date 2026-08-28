@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 /**
@@ -160,12 +160,35 @@ export function TrendChart({
   valueFormatter = (value) => value.toLocaleString('en-US'),
 }: TrendChartProps): ReactNode {
   const [hoveredDailyIndex, setHoveredDailyIndex] = useState<number | null>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [frameWidth, setFrameWidth] = useState(760);
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    const measure = () => {
+      const nextWidth = Math.round(frame.getBoundingClientRect().width);
+      if (nextWidth > 0) setFrameWidth(nextWidth);
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
 
   if (points.length < 2) return null;
 
-  const width = 760;
-  const padLeft = 48;
-  const padRight = 10;
+  // Use the rendered card width as the SVG coordinate space. This keeps the
+  // plot, labels, hover rail and tooltip aligned at every responsive width.
+  const width = Math.max(320, frameWidth);
+  // Reserve enough room for formatted values such as "$620,825" so the
+  // y-axis labels remain fully visible instead of being clipped by the SVG.
+  const padLeft = width < 480 ? 58 : width < 720 ? 68 : 78;
+  const padRight = width < 480 ? 6 : 10;
   const padTop = 16;
   const padBottom = 34;
   const chartWidth = width - padLeft - padRight;
@@ -187,7 +210,18 @@ export function TrendChart({
     padTop + chartHeight,
   )} L${xFor(0).toFixed(1)} ${String(padTop + chartHeight)} Z`;
   const tickValues = Array.from({ length: 4 }, (_, index) => domainMax - (index / 3) * domainSpan);
-  const visibleLabels = labels.length === points.length ? labels : points.map(() => '');
+  const labelStride =
+    width < 480
+      ? Math.max(1, Math.ceil(points.length / 4))
+      : width < 720
+        ? Math.max(1, Math.ceil(points.length / 6))
+        : 1;
+  const visibleLabels =
+    labels.length === points.length
+      ? labels.map((value, index) =>
+          index === 0 || index === labels.length - 1 || index % labelStride === 0 ? value : '',
+        )
+      : points.map(() => '');
   const dailyCount = hoverPoints.length;
   const hoveredValue = hoveredDailyIndex === null ? null : (hoverPoints[hoveredDailyIndex] ?? null);
   const hoveredLabel = hoveredDailyIndex === null ? null : (hoverLabels[hoveredDailyIndex] ?? null);
@@ -227,7 +261,7 @@ export function TrendChart({
           : 'translate(-50%, calc(-100% - 16px))';
 
   return (
-    <div className="relative" onMouseLeave={() => setHoveredDailyIndex(null)}>
+    <div ref={frameRef} className="relative" onMouseLeave={() => setHoveredDailyIndex(null)}>
       <svg
         viewBox={`0 0 ${String(width)} ${String(height)}`}
         width="100%"

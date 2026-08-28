@@ -14,7 +14,7 @@ export function LogRow({ entry, fresh = false }: { entry: LogEntry; fresh?: bool
     >
       <time className="font-pa-mono text-pa-10 text-pa-content-tertiary">{entry.t}</time>
       <div className="min-w-0">
-        <b className="text-pa-12">{entry.title}</b>
+        <b className="text-pa-13 font-semibold text-pa-content">{entry.title}</b>
         <span className="mt-px block text-pa-11 text-pa-content-tertiary">{entry.sub}</span>
       </div>
     </div>

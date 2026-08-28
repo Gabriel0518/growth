@@ -138,6 +138,7 @@ export const CAMPAIGNS: Campaign[] = [
     schedule: 'Sep 1 – Sep 30',
     delivering: 37,
     closed: 3,
+    sourceAssetIds: ['source-123'],
   },
   {
     id: 'CMP-2408-027',
@@ -596,9 +597,21 @@ const CREATOR_AVATARS = [
   '/pa/avatars/aliabdaal.jpg',
 ] as const;
 
-const VIDEO_COVER_FILES = Array.from({ length: 18 }, (_, index) =>
-  `/pa/video-covers/cover-${String(index + 1).padStart(2, '0')}.jpg`,
+const VIDEO_COVER_FILES = Array.from(
+  { length: 18 },
+  (_, index) => `/pa/video-covers/cover-${String(index + 1).padStart(2, '0')}.jpg`,
 );
+
+// Face references are deliberately separate from public social avatars. These
+// local demo portraits keep a logo or stylized profile image out of AIGC input.
+const FACE_REFERENCE_IMAGES = [
+  '/pa/video-covers/cover-06.jpg',
+  '/pa/video-covers/cover-13.jpg',
+  '/pa/video-covers/cover-17.jpg',
+  '/pa/video-covers/cover-04.jpg',
+  '/pa/video-covers/cover-08.jpg',
+  '/pa/video-covers/cover-15.jpg',
+] as const;
 
 function coversFor(seed: number): [string, string, string] {
   return [0, 1, 2].map(
@@ -642,8 +655,13 @@ const EXTRA_CREATORS: Creator[] = EXTRA_CREATOR_NAMES.map((name, index) => {
   };
 });
 
+const FACE_CONFIDENCE = [0.46, 0.92, 0.77, 0.42, 0.82, 0.88, 0.86, 0.79, 0.71, 0.39, 0.84, 0.93];
+
 export const CREATORS: Creator[] = [...BASE_CREATORS, ...EXTRA_CREATORS].map((creator, index) => ({
   ...creator,
+  faceAvatar: FACE_REFERENCE_IMAGES[index % FACE_REFERENCE_IMAGES.length]!,
+  // Stylized or cropped social avatars intentionally receive lower scores.
+  faceConfidence: FACE_CONFIDENCE[index % FACE_CONFIDENCE.length] ?? 0.72,
   videoCovers: coversFor(index),
 }));
 
@@ -683,7 +701,7 @@ export const DELIVERY: Delivery[] = [
     pacing: 74,
     roas: 0.82,
     fit: 81,
-    state: 'rejected',
+    state: 'live',
     views: 0,
     cpi: 0,
   },
@@ -791,6 +809,35 @@ export const HISTORY: HistoryEntry[] = [
 
 export const ASSETS: Asset[] = [
   {
+    id: 'source-123',
+    file: '123.mp4',
+    kind: 'MP4',
+    ratio: '9:16',
+    len: null,
+    status: 'ready',
+    origin: 'original',
+    hue: 205,
+    campaignId: 'CMP-2408-031',
+    productId: 'yahtzee',
+    previewUrl: '/pa/videos/source-123.mp4',
+  },
+  {
+    id: 'ai-1-lucia',
+    file: '1.mp4',
+    kind: 'MP4',
+    ratio: '9:16',
+    len: null,
+    status: 'ready',
+    origin: 'ai',
+    creatorId: 'lucia',
+    hue: 12,
+    campaignId: 'CMP-2408-031',
+    productId: 'yahtzee',
+    sourceAssetId: 'source-123',
+    previewUrl: '/pa/videos/ai-1.mp4',
+    cover: '/pa/avatars/nikkietutorials.jpg',
+  },
+  {
     id: 'a1',
     file: 'summer_hook_v3.mp4',
     kind: 'MP4',
@@ -800,6 +847,8 @@ export const ASSETS: Asset[] = [
     origin: 'original',
     hue: 205,
     campaignId: 'CMP-2408-031',
+    productId: 'yahtzee',
+    cover: '/pa/video-covers/cover-01.jpg',
   },
   {
     id: 'a2',
@@ -812,6 +861,8 @@ export const ASSETS: Asset[] = [
     creatorId: 'ava',
     hue: 205,
     campaignId: 'CMP-2408-031',
+    productId: 'yahtzee',
+    sourceAssetId: 'a1',
     perf: { impressions: 1_200_000, ctr: 3.4, roas: 4.2, campaigns: 3 },
   },
   {
@@ -824,6 +875,8 @@ export const ASSETS: Asset[] = [
     origin: 'original',
     hue: 24,
     campaignId: 'CMP-2408-027',
+    productId: 'loop',
+    cover: '/pa/video-covers/cover-04.jpg',
   },
   {
     id: 'a4',
@@ -836,6 +889,8 @@ export const ASSETS: Asset[] = [
     creatorId: 'kenji',
     hue: 24,
     campaignId: 'CMP-2408-027',
+    productId: 'loop',
+    sourceAssetId: 'a3',
   },
   {
     id: 'a5',
@@ -847,6 +902,8 @@ export const ASSETS: Asset[] = [
     origin: 'original',
     hue: 262,
     campaignId: 'CMP-2408-019',
+    productId: 'nordwell',
+    cover: '/pa/video-covers/cover-07.jpg',
   },
   {
     id: 'a6',
@@ -859,6 +916,8 @@ export const ASSETS: Asset[] = [
     creatorId: 'lucia',
     hue: 262,
     campaignId: 'CMP-2408-019',
+    productId: 'nordwell',
+    sourceAssetId: 'a5',
   },
   {
     id: 'a7',
@@ -870,6 +929,8 @@ export const ASSETS: Asset[] = [
     origin: 'original',
     hue: 38,
     campaignId: 'CMP-2408-014',
+    productId: 'paper',
+    cover: '/pa/video-covers/cover-10.jpg',
   },
   {
     id: 'a8',
@@ -882,6 +943,8 @@ export const ASSETS: Asset[] = [
     creatorId: 'priya',
     hue: 38,
     campaignId: 'CMP-2408-014',
+    productId: 'paper',
+    sourceAssetId: 'a7',
   },
   {
     id: 'a9',
@@ -893,6 +956,8 @@ export const ASSETS: Asset[] = [
     origin: 'original',
     hue: 8,
     campaignId: 'CMP-2408-004',
+    productId: 'lumea',
+    cover: '/pa/video-covers/cover-13.jpg',
   },
   {
     id: 'a10',
@@ -905,6 +970,8 @@ export const ASSETS: Asset[] = [
     creatorId: 'diego',
     hue: 8,
     campaignId: 'CMP-2408-004',
+    productId: 'lumea',
+    sourceAssetId: 'a9',
     error: 'The source file lost its audio track during transcode.',
   },
   {
@@ -917,6 +984,8 @@ export const ASSETS: Asset[] = [
     origin: 'original',
     hue: 150,
     campaignId: 'CMP-2408-009',
+    productId: 'kotoba',
+    cover: '/pa/video-covers/cover-16.jpg',
   },
   {
     id: 'a12',
@@ -929,6 +998,8 @@ export const ASSETS: Asset[] = [
     creatorId: 'amara',
     hue: 150,
     campaignId: 'CMP-2408-009',
+    productId: 'kotoba',
+    sourceAssetId: 'a11',
   },
 ];
 

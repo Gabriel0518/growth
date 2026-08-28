@@ -203,14 +203,14 @@ export default function KolNetworkPage(): ReactNode {
         <>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(248px,1fr))] gap-pa-3">
             {rows.slice(0, gridVisibleCount).map((creator) => (
-            <GridCard
-              key={creator.id}
-              creator={creator}
-              checked={picked.includes(creator.id)}
-              onToggle={(on) => {
-                toggle(creator.id, on);
-              }}
-            />
+              <GridCard
+                key={creator.id}
+                creator={creator}
+                checked={picked.includes(creator.id)}
+                onToggle={(on) => {
+                  toggle(creator.id, on);
+                }}
+              />
             ))}
           </div>
           {gridVisibleCount < rows.length ? (
@@ -311,7 +311,7 @@ function GridCard({
         <Checkbox checked={checked} onChange={onToggle} className="min-h-0" />
         <Avatar name={creator.name} src={creator.avatar} hue={creator.hue} size="m" />
         <Link href={`/pa/kols/${creator.id}`} className="min-w-0 flex-1 hover:underline">
-          <b className="block truncate text-pa-13">{creator.name}</b>
+          <b className="block truncate text-pa-15 font-semibold text-pa-content">{creator.name}</b>
           <span className="block truncate font-pa-mono text-pa-11 text-pa-content-tertiary">
             {creator.handle}
           </span>

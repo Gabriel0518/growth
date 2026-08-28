@@ -24,7 +24,9 @@ export function CreatorCard({ creator, delivery }: CreatorCardProps): ReactNode 
           <Avatar name={creator.name} src={creator.avatar} hue={creator.hue} size="m" />
           <div className="min-w-0 flex-1">
             {/* 创作者名与 handle 长度差异很大，截断而不是让长的把卡片挤变形 */}
-            <b className="block truncate text-pa-14">{creator.name}</b>
+            <b className="block truncate text-pa-15 font-semibold text-pa-content">
+              {creator.name}
+            </b>
             <div className="truncate font-pa-mono text-pa-11 text-pa-content-tertiary">
               {creator.handle}
             </div>
@@ -71,7 +73,6 @@ export function CreatorCard({ creator, delivery }: CreatorCardProps): ReactNode 
             <b className="pa-num block text-pa-14">{roas(delivery.roas)}</b>
           </span>
         </div>
-
       </Link>
       {creator.profileUrl === undefined ? null : (
         <a

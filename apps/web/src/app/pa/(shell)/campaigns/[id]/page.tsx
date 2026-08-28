@@ -321,7 +321,7 @@ export default function CampaignDetailPage(): ReactNode {
 
           <div className="border-t border-pa-border-subtle pt-pa-5 xl:border-l xl:border-t-0 xl:pl-pa-6 xl:pt-0">
             <div className="flex flex-wrap items-baseline justify-between gap-x-pa-3 gap-y-pa-1">
-              <h2 className="text-pa-15 font-semibold text-pa-content">Campaign setup</h2>
+              <h2 className="text-pa-17 font-bold text-pa-content">Campaign setup</h2>
               <span className="text-pa-11 text-pa-content-tertiary">Live configuration</span>
             </div>
             <div className="mt-pa-4 grid grid-cols-2 gap-x-pa-6 gap-y-pa-5 lg:grid-cols-4">
@@ -369,7 +369,10 @@ export default function CampaignDetailPage(): ReactNode {
               <div className="font-pa-mono text-pa-9 uppercase tracking-[0.1em] text-pa-content-tertiary">
                 {s.label}
               </div>
-              <div key={String(s.value)} className="pa-num pa-metric-update mt-pa-2 text-pa-20 font-bold">
+              <div
+                key={String(s.value)}
+                className="pa-num pa-metric-update mt-pa-2 text-pa-20 font-bold"
+              >
                 {s.value}
               </div>
               <div className="mt-pa-1 text-pa-10 text-pa-content-tertiary">{s.sub}</div>
@@ -683,11 +686,26 @@ export default function CampaignDetailPage(): ReactNode {
             <div
               className="relative aspect-[9/16] overflow-hidden rounded-pa-md bg-pa-surface-muted"
               style={{
-                background: selectedCreator.avatar
-                  ? `linear-gradient(155deg, rgba(15,23,42,.12), rgba(15,23,42,.7)), url(${selectedCreator.avatar}) center / cover`
-                  : `linear-gradient(145deg, hsl(${String(selectedCreator.hue)} 46% 60%), hsl(${String((selectedCreator.hue + 38) % 360)} 42% 36%))`,
+                background:
+                  selectedAsset?.previewUrl === undefined &&
+                  (selectedAsset?.cover ?? selectedCreator.faceAvatar ?? selectedCreator.avatar)
+                    ? `linear-gradient(155deg, rgba(15,23,42,.12), rgba(15,23,42,.7)), url(${selectedAsset?.cover ?? selectedCreator.faceAvatar ?? selectedCreator.avatar}) center / cover`
+                    : selectedAsset?.previewUrl === undefined
+                      ? `linear-gradient(145deg, hsl(${String(selectedCreator.hue)} 46% 60%), hsl(${String((selectedCreator.hue + 38) % 360)} 42% 36%))`
+                      : undefined,
               }}
             >
+              {selectedAsset?.previewUrl ? (
+                <video
+                  src={selectedAsset.previewUrl}
+                  poster={
+                    selectedAsset.cover ?? selectedCreator.faceAvatar ?? selectedCreator.avatar
+                  }
+                  controls
+                  playsInline
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : null}
               <span className="absolute left-pa-2 top-pa-2">
                 <StatusPill
                   tone={
@@ -710,7 +728,9 @@ export default function CampaignDetailPage(): ReactNode {
                 </StatusPill>
               </span>
               <span className="absolute bottom-pa-2 left-pa-2 font-pa-mono text-pa-9 text-white [text-shadow:0_1px_3px_rgba(0,0,0,.7)]">
-                AI VIDEO · 9:16 · 0:15
+                {selectedAsset?.origin === 'ai' ? 'AI VIDEO' : 'VIDEO'} ·{' '}
+                {selectedAsset?.ratio ?? '9:16'}
+                {selectedAsset?.len ? ` · ${selectedAsset.len}` : ''}
               </span>
             </div>
             <div className="grid content-start gap-pa-3">
@@ -769,7 +789,9 @@ export default function CampaignDetailPage(): ReactNode {
                     size="s"
                   />
                   <div className="min-w-0">
-                    <b className="block truncate text-pa-12">{selectedCreator.name}</b>
+                    <b className="block truncate text-pa-14 font-semibold text-pa-content">
+                      {selectedCreator.name}
+                    </b>
                     {selectedCreator.profileUrl ? (
                       <a
                         href={selectedCreator.profileUrl}
@@ -854,7 +876,9 @@ export default function CampaignDetailPage(): ReactNode {
                           size="m"
                         />
                         <span className="min-w-0">
-                          <b className="block truncate text-pa-13">{creator.name}</b>
+                          <b className="block truncate text-pa-14 font-semibold text-pa-content">
+                            {creator.name}
+                          </b>
                           <span className="block truncate font-pa-mono text-pa-11 text-pa-content-tertiary">
                             {creator.handle} · {creator.market}
                           </span>

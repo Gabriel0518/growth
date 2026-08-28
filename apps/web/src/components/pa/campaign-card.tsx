@@ -25,7 +25,9 @@ export function CampaignCard({
       <div className="flex items-start gap-pa-3">
         <ProductIcon product={product} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-pa-13 font-bold">{campaignLabel(campaign)}</div>
+          <div className="truncate text-pa-15 font-bold text-pa-content">
+            {campaignLabel(campaign)}
+          </div>
           <div className="mt-px font-pa-mono text-pa-9 text-pa-content-tertiary">{campaign.id}</div>
         </div>
         <StatusPill tone={STATUS_TONE_OF(campaign.status)}>

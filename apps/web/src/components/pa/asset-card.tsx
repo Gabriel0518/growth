@@ -36,6 +36,20 @@ export function AssetCard({ asset, creator, onOpen }: AssetCardProps): ReactNode
         className="relative grid aspect-[16/11] place-items-center"
         style={thumbStyle(asset.hue, asset.cover ?? creator?.avatar)}
       >
+        {asset.previewUrl ? (
+          <video
+            src={asset.previewUrl}
+            poster={asset.cover ?? creator?.avatar}
+            muted
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 h-full w-full object-cover"
+            aria-hidden="true"
+          />
+        ) : null}
+        {asset.previewUrl ? (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
+        ) : null}
         <div className="absolute right-pa-2 top-pa-2">
           <StatusPill tone={ASSET_TONE_OF(asset.status)}>{ASSET_LABEL[asset.status]}</StatusPill>
         </div>
@@ -45,12 +59,15 @@ export function AssetCard({ asset, creator, onOpen }: AssetCardProps): ReactNode
         </span>
       </div>
       <div className="grid gap-pa-2 px-[14px] py-pa-3">
-        <div className="break-all text-pa-12 font-semibold">{asset.file}</div>
-        <span className="inline-flex items-center gap-[6px] text-pa-10 text-pa-content-tertiary">
-          {asset.origin === 'ai'
-            ? `AI variant${creator === undefined ? '' : ` · ${creator.name}`}`
-            : 'Source footage'}
-        </span>
+        <div className="break-all text-pa-13 font-semibold text-pa-content">{asset.file}</div>
+        <div className="flex items-center justify-between gap-pa-2 text-pa-10 text-pa-content-tertiary">
+          <span className="inline-flex items-center gap-[6px]">
+            {asset.origin === 'ai'
+              ? `AI variant${creator === undefined ? '' : ` · ${creator.name}`}`
+              : 'Source footage'}
+          </span>
+          {asset.sourceAssetId ? <span className="text-pa-accent">AIGC linked</span> : null}
+        </div>
       </div>
     </button>
   );

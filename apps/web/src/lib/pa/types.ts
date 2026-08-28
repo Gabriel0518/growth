@@ -69,6 +69,8 @@ export interface Campaign {
   schedule: string;
   /** 本会话内新建的，用于列表高亮。 */
   isNew?: boolean;
+  /** 创建 campaign 时选中的源视频资产。 */
+  sourceAssetIds?: string[];
 }
 
 export interface Creator {
@@ -90,6 +92,10 @@ export interface Creator {
   hue: number;
   /** 本地缓存的公开头像，避免首屏依赖第三方图片服务。 */
   avatar?: string;
+  /** 人脸参考图：来自公开头像或视频抽帧，供 campaign 的 AIGC 合成使用。 */
+  faceAvatar?: string;
+  /** 人脸检测置信度，仅用于展示参考素材质量。 */
+  faceConfidence?: number;
   /** 本地缓存的公开视频封面，用于 KOL network 的内容预览。 */
   videoCovers?: string[];
   /** 公开社交主页，用于卡片和详情页的跳转。 */
@@ -140,10 +146,16 @@ export interface Asset {
   creatorId?: string;
   hue: number;
   campaignId: string;
+  /** 产品/应用维度；旧素材可通过 campaignId 回溯得到。 */
+  productId?: string;
+  /** AI 变体所使用的源视频资产。 */
+  sourceAssetId?: string;
   error?: string;
   perf?: { impressions: number; ctr: number; roas: number; campaigns: number };
   /** Local creator cover used as a believable AI-video thumbnail. */
   cover?: string;
+  /** Optional playable source. Mock assets use the cover as a preview frame. */
+  previewUrl?: string;
   approvedAt?: number;
   retryCount?: number;
 }
@@ -179,6 +191,8 @@ export interface Draft {
   kolTarget: number;
   channels: PlatformKey[];
   days: number;
+  /** 创建 campaign 时选择的源视频资产。 */
+  sourceAssetIds?: string[];
 }
 
 export interface WorkspaceUser {

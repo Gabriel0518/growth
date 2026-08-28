@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 
 import {
   Card,
@@ -12,6 +12,7 @@ import {
   PageHeader,
   Track,
   usePaStore,
+  useToast,
 } from '@/components/pa';
 import {
   Avatar,
@@ -53,7 +54,10 @@ const AUDIENCE = [
 
 export default function CreatorProfilePage(): ReactNode {
   const params = useParams<{ id: string }>();
-  const { state } = usePaStore();
+  const { state, dispatch } = usePaStore();
+  const toast = useToast();
+  const faceFileRef = useRef<HTMLInputElement>(null);
+  const [faceUploadBusy, setFaceUploadBusy] = useState(false);
   const creator = state.creators.find((c) => c.id === params.id);
 
   if (!creator) {
@@ -74,6 +78,42 @@ export default function CreatorProfilePage(): ReactNode {
 
   const history = state.history.filter((h) => h.creatorId === creator.id);
   const live = state.delivery.filter((d) => d.creatorId === creator.id);
+  const creatorId = creator.id;
+
+  function onFaceFileChange(event: ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (file === undefined) return;
+    if (!file.type.startsWith('image/')) {
+      toast('Choose an image file for the face reference.', 'error');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast('Face reference must be smaller than 8 MB.', 'error');
+      return;
+    }
+    setFaceUploadBusy(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        setFaceUploadBusy(false);
+        toast("Couldn't read that image. Try another file.", 'error');
+        return;
+      }
+      dispatch({
+        type: 'updateCreator',
+        id: creatorId,
+        patch: { faceAvatar: reader.result, faceConfidence: 0.96 },
+      });
+      setFaceUploadBusy(false);
+      toast('Face reference updated for AIGC generation.', 'ok');
+    };
+    reader.onerror = () => {
+      setFaceUploadBusy(false);
+      toast("Couldn't read that image. Try another file.", 'error');
+    };
+    reader.readAsDataURL(file);
+  }
 
   return (
     <>
@@ -95,7 +135,48 @@ export default function CreatorProfilePage(): ReactNode {
 
       <Card padded className="mb-pa-4">
         <div className="flex flex-wrap items-center gap-pa-4">
-          <Avatar name={creator.name} src={creator.avatar} hue={creator.hue} size="l" />
+          <div className="relative shrink-0">
+            <Avatar name={creator.name} src={creator.avatar} hue={creator.hue} size="l" />
+          </div>
+          <div className="relative shrink-0">
+            <Avatar
+              name={`${creator.name} face reference`}
+              src={creator.faceAvatar}
+              hue={creator.hue}
+              size="m"
+            />
+            <button
+              type="button"
+              aria-label="Edit AIGC face avatar"
+              title="Edit AIGC face avatar"
+              disabled={faceUploadBusy}
+              onClick={() => faceFileRef.current?.click()}
+              className="absolute bottom-[-3px] right-[-3px] grid h-[22px] w-[22px] place-items-center rounded-pa-full border-2 border-pa-surface bg-pa-content text-white shadow-pa-1 transition-colors hover:bg-pa-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pa-ring disabled:opacity-45"
+            >
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+                className="h-[11px] w-[11px]"
+              >
+                <path
+                  d="m10.8 2.1 3.1 3.1M2.5 13.5l2.6-.6 7.8-7.8a1.5 1.5 0 0 0-2.1-2.1L3 10.8l-.5 2.7Z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <input
+              ref={faceFileRef}
+              type="file"
+              accept="image/*"
+              onChange={onFaceFileChange}
+              className="sr-only"
+              aria-label="Upload AIGC face avatar"
+            />
+          </div>
           <div className="min-w-0 flex-1">
             <b className="text-pa-17">{creator.name}</b>
             <div className="font-pa-mono text-pa-12 text-pa-content-tertiary">{creator.handle}</div>
@@ -123,9 +204,9 @@ export default function CreatorProfilePage(): ReactNode {
               </a>
             )}
           </div>
-          {/* 账号级授权是 KOL 的属性，不进单条广告的状态链（CAMPAIGN-LIVE.md） */}
+          <span className="text-pa-11 text-pa-content-tertiary">AIGC face</span>
           <DataTrust state={creator.authorized ? 'fresh' : 'partial'}>
-            {creator.authorized ? 'Partnership + Spark authorized' : 'Spark not authorized'}
+            {creator.authorized ? 'Authorized' : 'Not authorized'}
           </DataTrust>
         </div>
       </Card>
@@ -157,7 +238,9 @@ export default function CreatorProfilePage(): ReactNode {
                   >
                     <div className="min-w-0">
                       <Link href={`/pa/campaigns/${campaign.id}`} className="hover:underline">
-                        <b className="block truncate text-pa-13">{campaignLabel(campaign)}</b>
+                        <b className="block truncate text-pa-14 font-semibold text-pa-content">
+                          {campaignLabel(campaign)}
+                        </b>
                       </Link>
                       <span className="pa-num text-pa-11 text-pa-content-tertiary">
                         {compact(d.impressions)} impressions · {compact(d.clicks)} clicks
@@ -195,7 +278,7 @@ export default function CreatorProfilePage(): ReactNode {
                     className="flex flex-wrap items-center justify-between gap-pa-3 border-b border-pa-border-subtle py-pa-3 last:border-b-0"
                   >
                     <div className="min-w-0">
-                      <b className="block truncate text-pa-13">
+                      <b className="block truncate text-pa-14 font-semibold text-pa-content">
                         {campaign ? campaignLabel(campaign) : h.campaignId}
                       </b>
                       <span className="pa-num text-pa-11 text-pa-content-tertiary">

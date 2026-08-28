@@ -8,21 +8,24 @@ import {
   Card,
   CardHead,
   CreatorCard,
+  DateRangePicker,
+  dateRangeLabels,
+  daysBetween,
+  defaultDateRange,
   EmptyState,
   Eyebrow,
+  formatDateRange,
   PageHeader,
   Sparkline,
   TrendChart,
   usePaStore,
 } from '@/components/pa';
-import { Button, buttonClasses, Dropdown, MetricCard, Segment } from '@/components/ui';
+import { Button, buttonClasses, Dropdown, MetricCard } from '@/components/ui';
 import { activeCampaigns, totals } from '@/lib/pa/derive';
 import { compact, int, money, roas } from '@/lib/pa/format';
 import type { CampaignStatus, Delivery } from '@/lib/pa/types';
 
 type MomentumMetric = 'ROAS' | 'Reach' | 'Impressions' | 'Clicks' | 'Views' | 'Installs' | 'Spend';
-
-const RANGE_DAYS: Record<string, number> = { '7D': 7, '30D': 30, '90D': 90 };
 
 function sampleEvenly<T>(values: T[], count: number): T[] {
   if (values.length <= count) return values;
@@ -39,18 +42,6 @@ function dailySeries(base: number, change: number, count: number): number[] {
     const progress = count === 1 ? 1 : index / (count - 1);
     const wave = Math.sin(index * 1.7) * 0.035;
     return Math.max(0, start * (1 + (change + wave) * progress));
-  });
-}
-
-function dateLabels(range: string, count: number): string[] {
-  const days = RANGE_DAYS[range] ?? 30;
-  const now = new Date();
-  const formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
-  return Array.from({ length: count }, (_, index) => {
-    const elapsed = Math.round((index / Math.max(count - 1, 1)) * (days - 1));
-    const date = new Date(now);
-    date.setDate(now.getDate() - (days - 1 - elapsed));
-    return formatter.format(date);
   });
 }
 
@@ -91,7 +82,7 @@ const STATUS_OPTIONS = [
 export default function OverviewPage(): ReactNode {
   const { state } = usePaStore();
   const [metric, setMetric] = useState<MomentumMetric>('ROAS');
-  const [range, setRange] = useState('30D');
+  const [range, setRange] = useState(() => defaultDateRange(30));
   const [status, setStatus] = useState('all');
 
   const t = totals(state);
@@ -126,10 +117,10 @@ export default function OverviewPage(): ReactNode {
     Installs: 0.096,
     Spend: 0.082,
   };
-  const count = RANGE_DAYS[range] ?? 30;
+  const count = daysBetween(range.start, range.end);
   const trend = dailySeries(metricValue[metric], metricChange[metric], count);
-  const axis = dateLabels(range, count);
-  const displayCount = count <= 7 ? 7 : 10;
+  const axis = dateRangeLabels(range);
+  const displayCount = count <= 7 ? count : 10;
   const displayTrend = sampleEvenly(trend, displayCount);
   const displayAxis = sampleEvenly(axis, displayCount);
   const headline = formatMetric(metric, metricValue[metric]);
@@ -200,18 +191,7 @@ export default function OverviewPage(): ReactNode {
         lede="Cross-platform campaign coverage, creator performance and investment health."
         actions={
           <>
-            <div className="w-[170px]">
-              <Dropdown
-                aria-label="Date range"
-                value={range}
-                onChange={setRange}
-                options={[
-                  { value: '7D', label: 'Last 7 days' },
-                  { value: '30D', label: 'Last 30 days' },
-                  { value: '90D', label: 'Last 90 days' },
-                ]}
-              />
-            </div>
+            <DateRangePicker value={range} onChange={setRange} className="w-[292px] max-w-full" />
             <Link href="/pa/campaigns/new" className={buttonClasses()}>
               Create campaign
             </Link>
@@ -261,16 +241,6 @@ export default function OverviewPage(): ReactNode {
                     ]}
                   />
                 </div>
-                <Segment
-                  aria-label="Range"
-                  value={range}
-                  onChange={setRange}
-                  items={[
-                    { value: '7D', label: '7D' },
-                    { value: '30D', label: '30D' },
-                    { value: '90D', label: '90D' },
-                  ]}
-                />
               </div>
             }
           />
@@ -285,7 +255,7 @@ export default function OverviewPage(): ReactNode {
                 labels={displayAxis}
                 dailyPoints={trend}
                 dailyLabels={axis}
-                label={`${metric} trend over ${range}`}
+                label={`${metric} trend over ${formatDateRange(range)}`}
                 color={trendColor(metric)}
                 valueFormatter={(value) => formatMetric(metric, value)}
               />
@@ -325,7 +295,9 @@ export default function OverviewPage(): ReactNode {
 
       <div className="mb-pa-3 flex flex-wrap items-end justify-between gap-pa-3">
         <div>
-          <h2 className="text-[16px] font-semibold leading-[22px]">Collaborating creators</h2>
+          <h2 className="text-pa-18 font-bold leading-[24px] text-pa-content">
+            Collaborating creators
+          </h2>
         </div>
         <div className="flex items-center gap-pa-3">
           <span className="pa-num text-pa-11 text-pa-content-tertiary">
@@ -347,7 +319,8 @@ export default function OverviewPage(): ReactNode {
             const creator = state.creators.find((item) => item.id === id);
             if (!creator) return null;
             const existing = state.delivery.find((delivery) => delivery.creatorId === id);
-            const delivery: Delivery | undefined = existing ??
+            const delivery: Delivery | undefined =
+              existing ??
               (fallbackCampaign
                 ? {
                     creatorId: creator.id,
@@ -364,20 +337,14 @@ export default function OverviewPage(): ReactNode {
                   }
                 : undefined);
             if (!delivery) return null;
-            return (
-              <CreatorCard
-                key={id}
-                creator={creator}
-                delivery={delivery}
-              />
-            );
+            return <CreatorCard key={id} creator={creator} delivery={delivery} />;
           });
         })()}
       </div>
 
       <div className="mb-pa-3 flex flex-wrap items-end justify-between gap-pa-3">
         <div>
-          <h2 className="text-[16px] font-semibold leading-[22px]">Active campaigns</h2>
+          <h2 className="text-pa-18 font-bold leading-[24px] text-pa-content">Active campaigns</h2>
         </div>
         <div className="flex items-center gap-pa-3">
           <div className="w-[170px]">

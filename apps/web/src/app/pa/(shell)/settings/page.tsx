@@ -34,7 +34,7 @@ export default function SettingsPage(): ReactNode {
           <div className="flex flex-wrap items-center gap-pa-4 p-pa-4">
             <Avatar name={state.user.name} size="l" />
             <div className="min-w-0 flex-1">
-              <b className="text-pa-15">{state.user.name}</b>
+              <b className="text-pa-17 font-semibold text-pa-content">{state.user.name}</b>
               <div className="text-pa-12 text-pa-content-tertiary">{state.user.role}</div>
               <div className="pa-num text-pa-12 text-pa-content-body">{state.user.email}</div>
             </div>
@@ -61,7 +61,7 @@ export default function SettingsPage(): ReactNode {
                 className="flex flex-wrap items-center justify-between gap-pa-3 border-b border-pa-border-subtle py-pa-3 last:border-b-0"
               >
                 <div className="min-w-0">
-                  <b className="block truncate text-pa-13">
+                  <b className="block truncate text-pa-14 font-semibold text-pa-content">
                     {a.platform} · {a.owner}
                   </b>
                   <span className="pa-num block truncate text-pa-11 text-pa-content-tertiary">

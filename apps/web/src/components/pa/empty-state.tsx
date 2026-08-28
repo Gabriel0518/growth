@@ -10,7 +10,7 @@ interface EmptyStateProps {
 export function EmptyState({ title, description, action }: EmptyStateProps): ReactNode {
   return (
     <div className="grid place-items-center gap-pa-1 px-pa-6 py-[56px] text-center">
-      <h3 className="text-pa-15 font-semibold">{title}</h3>
+      <h3 className="text-pa-17 font-bold text-pa-content">{title}</h3>
       {description === undefined ? null : (
         <p className="max-w-[380px] text-pa-12 text-pa-content-tertiary">{description}</p>
       )}

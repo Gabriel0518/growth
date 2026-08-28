@@ -36,12 +36,12 @@ export function CardHead({ title, sub, aside, className }: CardHeadProps): React
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-pa-3 border-b border-pa-border-subtle px-pa-4 py-[14px]',
+        'flex flex-col items-stretch gap-pa-3 border-b border-pa-border-subtle px-pa-4 py-[14px] sm:flex-row sm:items-center',
         className,
       )}
     >
       <div className="min-w-0 flex-1">
-        <div className="text-pa-15 font-semibold">{title}</div>
+        <div className="text-pa-17 font-bold text-pa-content">{title}</div>
         {sub === undefined ? null : (
           <div className="text-pa-11 text-pa-content-tertiary">{sub}</div>
         )}

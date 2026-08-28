@@ -85,6 +85,11 @@ export type PaAction =
   | { type: 'stopDelivery'; campaignId: string; creatorId: string }
   | { type: 'approveAsset'; id: string }
   | { type: 'setDraft'; draft: Draft | null }
+  | {
+      type: 'updateCreator';
+      id: string;
+      patch: Partial<Pick<Creator, 'avatar' | 'faceAvatar' | 'faceConfidence'>>;
+    }
   | { type: 'addAsset'; asset: Asset }
   | { type: 'updateAsset'; id: string; patch: Partial<Asset> }
   | { type: 'removeAsset'; id: string };
@@ -128,14 +133,29 @@ function preparingDelivery(creator: Creator, campaignId: string, matchedAt = 0):
   };
 }
 
-function reviewAsset(creator: Creator, campaignId: string, id: string): Asset {
+interface ReviewAssetOptions {
+  fileName?: string;
+  previewUrl?: string;
+}
+
+function reviewAsset(
+  creator: Creator,
+  campaignId: string,
+  id: string,
+  productId?: string,
+  sourceAssetId?: string,
+  options?: ReviewAssetOptions,
+): Asset {
   const slug = creator.handle
     .replace(/^@/, '')
     .replace(/[^a-z0-9]+/gi, '-')
     .toLowerCase();
+  // AIGC must use the explicit face reference. The social account avatar is
+  // display metadata only and is never silently substituted for a face input.
+  const faceReference = creator.faceAvatar;
   return {
     id,
-    file: `ai_${slug}_cut.mp4`,
+    file: options?.fileName ?? `ai_${slug}_cut.mp4`,
     kind: 'MP4',
     ratio: '9:16',
     len: '0:15',
@@ -144,8 +164,20 @@ function reviewAsset(creator: Creator, campaignId: string, id: string): Asset {
     creatorId: creator.id,
     hue: creator.hue,
     campaignId,
-    ...(creator.avatar ? { cover: creator.avatar } : {}),
+    ...(productId ? { productId } : {}),
+    ...(sourceAssetId ? { sourceAssetId } : {}),
+    ...(faceReference ? { cover: faceReference } : {}),
+    ...(options?.previewUrl ? { previewUrl: options.previewUrl } : {}),
   };
+}
+
+function sourceIdsForCampaign(state: StoreState, campaign: Campaign): string[] {
+  if (campaign.sourceAssetIds && campaign.sourceAssetIds.length > 0) {
+    return campaign.sourceAssetIds;
+  }
+  return state.assets
+    .filter((asset) => asset.campaignId === campaign.id && asset.origin === 'original')
+    .map((asset) => asset.id);
 }
 
 const AUTO_CREATOR_NAMES = [
@@ -282,6 +314,19 @@ function reducer(state: StoreState, action: PaAction): StoreState {
       const { draft } = action;
       const campaignId = `CMP-2409-${String(100 + state.campaigns.length)}`;
       const seedCreators = state.creators.slice(0, Math.min(3, state.creators.length));
+      const selectedSources = (draft.sourceAssetIds ?? [])
+        .map((id) => state.assets.find((asset) => asset.id === id))
+        .filter((asset): asset is NonNullable<typeof asset> => asset?.origin === 'original');
+      const selectedSourceIs123 = selectedSources.some(
+        (source) => source.id === 'source-123' || source.file.toLowerCase() === '123.mp4',
+      );
+      const sourceCopies = selectedSources.map((source) => ({
+        ...source,
+        id: `source-${campaignId}-${source.id}`,
+        campaignId,
+        productId: draft.productId,
+      }));
+      const sourceIds = sourceCopies.map((source) => source.id);
       const created: Campaign = {
         id: campaignId,
         name: draft.name,
@@ -306,19 +351,30 @@ function reducer(state: StoreState, action: PaAction): StoreState {
         delivering: 0,
         closed: 0,
         isNew: true,
+        sourceAssetIds: sourceIds,
       };
+      const sourceAssetId = sourceIds[0];
       const seedDeliveries = seedCreators.map((creator) =>
         preparingDelivery(creator, campaignId, 0),
       );
       const seedAssets = seedCreators.map((creator, index) =>
-        reviewAsset(creator, campaignId, `auto-${campaignId}-${String(index + 1)}`),
+        reviewAsset(
+          creator,
+          campaignId,
+          `auto-${campaignId}-${String(index + 1)}`,
+          draft.productId,
+          sourceAssetId,
+          selectedSourceIs123 && creator.id === 'lucia'
+            ? { fileName: '1.mp4', previewUrl: '/pa/videos/ai-1.mp4' }
+            : undefined,
+        ),
       );
       return withLog(
         {
           ...state,
           campaigns: [created, ...state.campaigns],
           delivery: [...seedDeliveries, ...state.delivery],
-          assets: [...seedAssets, ...state.assets],
+          assets: [...seedAssets, ...sourceCopies, ...state.assets],
           draft: null,
         },
         created.id,
@@ -360,6 +416,8 @@ function reducer(state: StoreState, action: PaAction): StoreState {
           creator,
           action.campaignId,
           `manual-${action.campaignId}-${String(state.tick)}-${String(index)}`,
+          campaign.productId,
+          sourceIdsForCampaign(state, campaign)[0],
         ),
       );
 
@@ -391,6 +449,7 @@ function reducer(state: StoreState, action: PaAction): StoreState {
 
       const campaignRows = state.delivery.filter((d) => d.campaignId === campaign.id);
       const campaignAssets = state.assets.filter((a) => a.campaignId === campaign.id);
+      const sourceAssetId = sourceIdsForCampaign(state, campaign)[0];
 
       // Each stage is deliberately separated by a tick so matching, safety
       // clearance and publishing never appear to happen at the same moment.
@@ -518,6 +577,8 @@ function reducer(state: StoreState, action: PaAction): StoreState {
             creator,
             campaign.id,
             `auto-${campaign.id}-${String(state.tick)}-${String(index)}`,
+            campaign.productId,
+            sourceAssetId,
           ),
         );
         const campaigns = state.campaigns.map((item) =>
@@ -618,6 +679,8 @@ function reducer(state: StoreState, action: PaAction): StoreState {
           creator,
           campaign.id,
           `retry-${campaign.id}-${String(state.tick)}-${String(index)}`,
+          campaign.productId,
+          sourceIdsForCampaign(state, campaign)[0],
         );
         const nextAsset: Asset = {
           ...(existing ?? replacement),
@@ -749,6 +812,16 @@ function reducer(state: StoreState, action: PaAction): StoreState {
 
     case 'setDraft': {
       return { ...state, draft: action.draft };
+    }
+
+    case 'updateCreator': {
+      if (!state.creators.some((creator) => creator.id === action.id)) return state;
+      return {
+        ...state,
+        creators: state.creators.map((creator) =>
+          creator.id === action.id ? { ...creator, ...action.patch } : creator,
+        ),
+      };
     }
 
     case 'addAsset': {
