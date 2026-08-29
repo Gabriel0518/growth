@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import type { FieldDef } from '@/lib/client/ad/field-types';
+import { Dropdown } from '@/components/ui/dropdown';
 
 interface Props {
   field: FieldDef;
@@ -89,25 +90,8 @@ function SelectDropdown({
   options: string[];
   onChange: (v: string) => void;
 }): React.ReactElement {
-  const [open, setOpen] = useState(false);
   return (
-    <div className="relative flex-1">
-      <button type="button" onClick={() => { setOpen(!open); }}
-        className="w-full truncate rounded border border-border bg-bg-card px-2 py-1 text-left text-xs text-text">
-        {value || '--'}
-      </button>
-      {open ? (
-        <div className="absolute top-full left-0 z-50 mt-1 max-h-40 w-full overflow-auto rounded border border-border bg-bg-dark shadow-lg">
-          {options.map((o) => (
-            <button key={o} type="button"
-              onClick={() => { onChange(o); setOpen(false); }}
-              className={`w-full truncate px-2 py-1 text-left text-xs ${o === value ? 'bg-accent/10 text-accent' : 'text-text hover:bg-bg-card'}`}>
-              {o}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
+    <Dropdown tone="legacy" className="flex-1" aria-label="Select value" value={value} options={options.map((option) => ({ value: option, label: option }))} onChange={onChange} />
   );
 }
 
@@ -139,18 +123,18 @@ function MultiSelectDropdown({
   return (
     <div className="relative flex-1">
       <button type="button" onClick={() => { setOpen(!open); }}
-        className="w-full truncate rounded border border-border bg-bg-card px-2 py-1 text-left text-xs text-text">
+        className="unified-select w-full truncate border-border bg-bg-card px-2 text-left text-xs text-text">
         {selected.length === 0 ? '--' : `${String(selected.length)} 个已选`}
       </button>
       {open ? (
-        <div className="absolute top-full left-0 z-50 mt-1 w-full overflow-auto rounded border border-border bg-bg-dark shadow-lg">
+        <div className="absolute top-full left-0 z-50 mt-1 w-full overflow-auto rounded-pa-md border border-border bg-bg-dark p-1 shadow-pa-2">
           <input type="text" value={query} onChange={(e) => { setQuery(e.target.value); }}
             placeholder="搜索…" autoFocus
-            className="w-full border-b border-border bg-bg-dark px-2 py-1 text-xs text-text outline-none" />
+            className="unified-select mb-1 min-h-[36px] border-border bg-bg-dark px-2 text-xs text-text" />
           <div className="max-h-40 overflow-auto">
             {filtered.map((o) => (
               <label key={o}
-                className={`flex cursor-pointer items-center gap-1.5 px-2 py-1 text-xs hover:bg-bg-card ${
+                className={`flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-pa-sm px-2 py-1 text-xs hover:bg-bg-card ${
                   selected.includes(o) ? 'text-accent' : 'text-text'
                 }`}>
                 <input type="checkbox" checked={selected.includes(o)}

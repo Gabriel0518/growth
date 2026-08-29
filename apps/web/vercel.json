@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm --filter @agentic-ug/core --filter @agentic-ug/db --filter @agentic-ug/fetcher build && next build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": "nextjs",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/pa",
+      "permanent": false
+    },
+    {
+      "source": "/login",
+      "destination": "/pa/login",
+      "permanent": false
+    }
+  ]
+}

@@ -75,13 +75,13 @@ export function SearchableSelect<T = undefined>({
             }
           }}
           placeholder={placeholder}
-          className="w-[280px] rounded-md border border-accent bg-bg-dark px-3 py-1.5 text-xs text-text outline-none"
+          className="unified-select w-[280px] border-accent bg-bg-dark"
         />
       ) : (
         <button
           type="button"
           onClick={() => { setOpen(true); }}
-          className="w-[280px] truncate rounded-md border border-border bg-bg-dark px-3 py-1.5 text-left text-xs text-text transition-colors hover:border-accent/50"
+          className="unified-select w-[280px] truncate border-border bg-bg-dark text-left transition-colors hover:border-accent/50"
         >
           {selected ? (
             <span className="whitespace-nowrap">{selected.label}</span>
@@ -93,7 +93,7 @@ export function SearchableSelect<T = undefined>({
 
       {/* 下拉列表 */}
       {open ? (
-        <div className="absolute top-full left-0 z-[100] mt-1 max-h-48 w-[380px] overflow-auto rounded-md border border-border bg-bg-card shadow-lg">
+        <div className="absolute top-full left-0 z-[100] mt-1 max-h-48 w-[380px] overflow-auto rounded-pa-md border border-border bg-bg-card p-1 shadow-pa-2">
           {filtered.length === 0 ? (
             <div className="px-3 py-2 text-xs text-text-dim">无匹配结果</div>
           ) : (
@@ -102,9 +102,9 @@ export function SearchableSelect<T = undefined>({
                 key={o.value}
                 type="button"
                 onClick={() => { handleSelect(o.value); }}
-                className={`w-full truncate px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors ${
+                className={`flex min-h-[36px] w-full truncate rounded-pa-sm px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors ${
                   o.value === value
-                    ? 'bg-accent/10 text-accent'
+                    ? 'bg-accent/10 font-semibold text-accent'
                     : 'text-text hover:bg-bg-dark'
                 }`}
               >

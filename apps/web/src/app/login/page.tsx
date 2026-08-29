@@ -7,6 +7,7 @@ import { login } from './actions';
 import { config } from '@/lib/config';
 import { readSession } from '@/lib/dashboard/auth';
 import { listUsers } from '@/lib/feishu/store';
+import { Dropdown } from '@/components/ui/dropdown';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,22 +63,24 @@ export default async function LoginPage({
         </div>
 
         <form action="/login/pick" method="post">
-          <select
-            name="open_id"
-            required
-            defaultValue=""
-            disabled={users.length === 0}
-            className="mb-3 w-full rounded-md border border-white/10 bg-bg-dark px-3 py-2.5 text-text outline-none focus:border-accent"
-          >
-            <option value="" disabled>
-              {users.length === 0 ? '（暂无已授权用户）' : '选择你的名字…'}
-            </option>
-            {users.map((u) => (
-              <option key={u.openId} value={u.openId}>
-                {u.name}
-              </option>
-            ))}
-          </select>
+          <div className="mb-3">
+            <Dropdown
+              tone="legacy"
+              aria-label="选择已授权用户"
+              name="open_id"
+              required
+              defaultValue=""
+              disabled={users.length === 0}
+              options={[
+                {
+                  value: '',
+                  label: users.length === 0 ? '（暂无已授权用户）' : '选择你的名字…',
+                  disabled: true,
+                },
+                ...users.map((u) => ({ value: u.openId, label: u.name })),
+              ]}
+            />
+          </div>
           <button
             type="submit"
             disabled={users.length === 0}

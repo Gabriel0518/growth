@@ -8,6 +8,7 @@ import { Modal } from './modal';
 
 import { createCampaign, fetchCampaigns, syncCampaignsOnly, updateCampaign } from '@/lib/client/ad/api';
 import type { FbCampaign } from '@/lib/client/ad/types';
+import { Dropdown } from '@/components/ui/dropdown';
 
 /** 广告系列面板：列表 + 创建弹窗 + 状态切换。 */
 export function AdCampaignPanel({ accountId }: { accountId: string }): React.ReactElement {
@@ -270,16 +271,7 @@ export function AdCampaignPanel({ accountId }: { accountId: string }): React.Rea
           </label>
           <label className="flex flex-col gap-1 text-sm">
             目标
-            <select
-              value={objective}
-              onChange={(e) => { setObjective(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent"
-            >
-              <option value="OUTCOME_APP_PROMOTION">应用推广</option>
-              <option value="OUTCOME_TRAFFIC">流量</option>
-              <option value="OUTCOME_SALES">转化</option>
-              <option value="OUTCOME_ENGAGEMENT">互动</option>
-            </select>
+            <Dropdown tone="legacy" aria-label="目标" value={objective} onChange={setObjective} options={[{ value: 'OUTCOME_APP_PROMOTION', label: '应用推广' }, { value: 'OUTCOME_TRAFFIC', label: '流量' }, { value: 'OUTCOME_SALES', label: '转化' }, { value: 'OUTCOME_ENGAGEMENT', label: '互动' }]} />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={isAbo} onChange={(e) => { setIsAbo(e.target.checked); }} />
@@ -297,21 +289,11 @@ export function AdCampaignPanel({ accountId }: { accountId: string }): React.Rea
           </label>
           <label className="flex flex-col gap-1 text-sm">
             购买类型（buying_type）
-            <select value={buyingType} onChange={(e) => { setBuyingType(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent">
-              <option value="AUCTION">AUCTION - 竞价</option>
-              <option value="RESERVED">RESERVED - 预定</option>
-            </select>
+            <Dropdown tone="legacy" aria-label="购买类型" value={buyingType} onChange={setBuyingType} options={[{ value: 'AUCTION', label: 'AUCTION - 竞价' }, { value: 'RESERVED', label: 'RESERVED - 预定' }]} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             出价策略（bid_strategy）{isAbo ? '（ABO 时在广告组设置）' : ''}
-            <select value={bidStrategy} onChange={(e) => { setBidStrategy(e.target.value); }} disabled={isAbo}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-50">
-              <option value="LOWEST_COST_WITHOUT_CAP">最低成本（无出价上限）</option>
-              <option value="LOWEST_COST_WITH_BID_CAP">最低成本（有出价上限）</option>
-              <option value="COST_CAP">成本上限</option>
-              <option value="LOWEST_COST_WITH_MIN_ROAS">最低成本（最低 ROAS）</option>
-            </select>
+            <Dropdown tone="legacy" aria-label="出价策略" value={bidStrategy} onChange={setBidStrategy} disabled={isAbo} options={[{ value: 'LOWEST_COST_WITHOUT_CAP', label: '最低成本（无出价上限）' }, { value: 'LOWEST_COST_WITH_BID_CAP', label: '最低成本（有出价上限）' }, { value: 'COST_CAP', label: '成本上限' }, { value: 'LOWEST_COST_WITH_MIN_ROAS', label: '最低成本（最低 ROAS）' }]} />
           </label>
           {error ? (
             <div className="rounded-md border border-red/30 bg-red/10 px-3 py-2 text-xs text-red">

@@ -9,6 +9,7 @@ import { SearchableSelect } from './searchable-select';
 
 import { createAdSet, fetchAdSets, fetchCampaigns, syncAdSetsOnly, updateAdSet } from '@/lib/client/ad/api';
 import type { FbCampaign, FbAdSet } from '@/lib/client/ad/types';
+import { Dropdown } from '@/components/ui/dropdown';
 
 const LS_ADSET_CAMPAIGN_KEY = 'ad-current-campaign-id';
 
@@ -368,33 +369,13 @@ export function AdSetPanel({ accountId }: { accountId: string }): React.ReactEle
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">计费方式（billing_event）
-            <select value={billingEvent} onChange={(e) => { setBillingEvent(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent">
-              <option value="IMPRESSIONS">IMPRESSIONS - 展示付费</option>
-              <option value="CLICKS">CLICKS - 点击付费</option>
-              <option value="LINK_CLICKS">LINK_CLICKS - 链接点击付费</option>
-              <option value="PAGE_LIKES">PAGE_LIKES - 主页赞付费</option>
-              <option value="POST_ENGAGEMENT">POST_ENGAGEMENT - 帖子互动付费</option>
-            </select>
+            <Dropdown tone="legacy" aria-label="计费方式" value={billingEvent} onChange={setBillingEvent} options={[{ value: 'IMPRESSIONS', label: 'IMPRESSIONS - 展示付费' }, { value: 'CLICKS', label: 'CLICKS - 点击付费' }, { value: 'LINK_CLICKS', label: 'LINK_CLICKS - 链接点击付费' }, { value: 'PAGE_LIKES', label: 'PAGE_LIKES - 主页赞付费' }, { value: 'POST_ENGAGEMENT', label: 'POST_ENGAGEMENT - 帖子互动付费' }]} />
           </label>
           <label className="flex flex-col gap-1 text-sm">出价策略（bid_strategy）
-            <select value={bidStrategy} onChange={(e) => { setBidStrategy(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent">
-              <option value="LOWEST_COST_WITHOUT_CAP">最低成本（无出价上限）</option>
-              <option value="LOWEST_COST_WITH_BID_CAP">最低成本（有出价上限）</option>
-              <option value="COST_CAP">成本上限</option>
-              <option value="LOWEST_COST_WITH_MIN_ROAS">最低成本（最低 ROAS）</option>
-            </select>
+            <Dropdown tone="legacy" aria-label="出价策略" value={bidStrategy} onChange={setBidStrategy} options={[{ value: 'LOWEST_COST_WITHOUT_CAP', label: '最低成本（无出价上限）' }, { value: 'LOWEST_COST_WITH_BID_CAP', label: '最低成本（有出价上限）' }, { value: 'COST_CAP', label: '成本上限' }, { value: 'LOWEST_COST_WITH_MIN_ROAS', label: '最低成本（最低 ROAS）' }]} />
           </label>
           <label className="flex flex-col gap-1 text-sm">优化目标
-            <select value={optGoal} onChange={(e) => { setOptGoal(e.target.value); }}
-              className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent">
-              <option value="OFFSITE_CONVERSIONS">AEO - 转化</option>
-              <option value="VALUE">VO - 价值</option>
-              <option value="APP_INSTALLS">应用安装</option>
-              <option value="LINK_CLICKS">链接点击</option>
-              <option value="IMPRESSIONS">展示</option>
-            </select>
+            <Dropdown tone="legacy" aria-label="优化目标" value={optGoal} onChange={setOptGoal} options={[{ value: 'OFFSITE_CONVERSIONS', label: 'AEO - 转化' }, { value: 'VALUE', label: 'VO - 价值' }, { value: 'APP_INSTALLS', label: '应用安装' }, { value: 'LINK_CLICKS', label: '链接点击' }, { value: 'IMPRESSIONS', label: '展示' }]} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             App ID（application_id）
@@ -418,16 +399,7 @@ export function AdSetPanel({ accountId }: { accountId: string }): React.ReactEle
             <div className="space-y-4 rounded-md border border-border/50 bg-bg-card/50 p-3">
               <label className="flex flex-col gap-1 text-sm">
                 跳转类型（destination_type）
-                <select value={destType} onChange={(e) => { setDestType(e.target.value); }}
-                  className="w-full rounded-md border border-border bg-bg-card px-3 py-2 text-sm text-text outline-none focus:border-accent">
-                  <option value="APP">APP - 应用</option>
-                  <option value="WEBSITE">WEBSITE - 网站</option>
-                  <option value="MESSENGER">MESSENGER - Messenger</option>
-                  <option value="WHATSAPP">WHATSAPP</option>
-                  <option value="INSTAGRAM_DIRECT">INSTAGRAM_DIRECT</option>
-                  <option value="ON_AD">ON_AD</option>
-                  <option value="ON_POST">ON_POST</option>
-                </select>
+                <Dropdown tone="legacy" aria-label="跳转类型" value={destType} onChange={setDestType} options={[{ value: 'APP', label: 'APP - 应用' }, { value: 'WEBSITE', label: 'WEBSITE - 网站' }, { value: 'MESSENGER', label: 'MESSENGER - Messenger' }, { value: 'WHATSAPP', label: 'WHATSAPP' }, { value: 'INSTAGRAM_DIRECT', label: 'INSTAGRAM_DIRECT' }, { value: 'ON_AD', label: 'ON_AD' }, { value: 'ON_POST', label: 'ON_POST' }]} />
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={skAd} onChange={(e) => { setSkAd(e.target.checked); }} />

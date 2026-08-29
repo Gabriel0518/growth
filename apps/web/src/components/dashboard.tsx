@@ -78,10 +78,10 @@ export function Dashboard({
 
   return (
     <>
-      <header className="sticky top-0 z-[200] flex flex-wrap items-center justify-between gap-3 border-b border-border bg-bg-header px-6 py-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-[1.3rem] font-bold whitespace-nowrap text-accent">📊</h1>
-          <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-[200] flex flex-wrap items-start justify-between gap-3 border-b border-border bg-bg-header px-6 py-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+          <h1 className="shrink-0 text-[1.3rem] font-bold whitespace-nowrap text-accent">📊</h1>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             {PANELS.map((n) => (
               <button
                 key={n.key}
@@ -96,7 +96,7 @@ export function Dashboard({
             ))}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto lg:justify-end lg:gap-4">
           {panel === 'pb-personal' ? (
             <label
               className="flex cursor-pointer items-center gap-1.5 select-none"

@@ -28,6 +28,7 @@ import type {
   SortObj,
 } from '@/lib/client/aigc';
 import { getJson } from '@/lib/client/api';
+import { Dropdown } from '@/components/ui/dropdown';
 
 const PAGE_SIZE = 20;
 const WINDOWS = [3, 7, 14];
@@ -339,36 +340,20 @@ export function MaterialPanel({
           <label className="flex flex-col gap-1 text-[0.72rem] text-text-muted">
             数值筛选
             <span className="flex items-center gap-1">
-              <select
-                value={numFilter.metric}
-                onChange={(e) => {
-                  setNumFilter((n) => ({ ...n, metric: e.target.value as NumMetric }));
+              <Dropdown tone="legacy" aria-label="数值指标" value={numFilter.metric} onChange={(value) => {
+                  setNumFilter((n) => ({ ...n, metric: value as NumMetric }));
                   setFbPage(1);
                   setTtPage(1);
                 }}
-                className={SELECT_CLS}
-              >
-                {AIGC_NUM_METRICS.map((m) => (
-                  <option key={m.key} value={m.key}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={numFilter.op}
-                onChange={(e) => {
-                  setNumFilter((n) => ({ ...n, op: e.target.value as NumOp }));
+                options={AIGC_NUM_METRICS.map((m) => ({ value: m.key, label: m.label }))}
+              />
+              <Dropdown tone="legacy" aria-label="数值运算符" value={numFilter.op} onChange={(value) => {
+                  setNumFilter((n) => ({ ...n, op: value as NumOp }));
                   setFbPage(1);
                   setTtPage(1);
                 }}
-                className={SELECT_CLS}
-              >
-                {AIGC_NUM_OPS.map((o) => (
-                  <option key={o.key} value={o.key}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                options={AIGC_NUM_OPS.map((o) => ({ value: o.key, label: o.label }))}
+              />
               <input
                 type="number"
                 step="any"
@@ -449,20 +434,7 @@ function FilterSelect({
   return (
     <label className="flex flex-col gap-1 text-[0.72rem] text-text-muted">
       {label}
-      <select
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-        }}
-        className={SELECT_CLS}
-      >
-        <option value="">全部</option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+      <Dropdown tone="legacy" aria-label={label} value={value} onChange={onChange} options={[{ value: '', label: '全部' }, ...options.map((o) => ({ value: o, label: o }))]} />
     </label>
   );
 }
@@ -485,19 +457,7 @@ function ReuseTargetSelect({
       title="选一次目标产品，本表所有素材的「复制」都改成该产品（逐行各自复制）"
     >
       <span className="whitespace-nowrap">跨产品复用→目标产品</span>
-      <select
-        value={target}
-        onChange={(e) => {
-          onChange(e.target.value);
-        }}
-        className={SELECT_CLS}
-      >
-        {products.map((p) => (
-          <option key={p} value={p}>
-            {p}
-          </option>
-        ))}
-      </select>
+      <Dropdown tone="legacy" aria-label="目标产品" value={target} onChange={onChange} options={products.map((p) => ({ value: p, label: p }))} />
     </label>
   );
 }
